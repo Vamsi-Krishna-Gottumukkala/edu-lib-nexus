@@ -130,7 +130,7 @@ export const AppSidebar = ({ items, collapsed }: AppSidebarProps) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1 scrollbar-hide">
         {items.map((item) => (
           <NavItemComponent key={item.title} item={item} collapsed={collapsed} />
         ))}
