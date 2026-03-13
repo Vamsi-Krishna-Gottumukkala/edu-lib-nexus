@@ -162,6 +162,16 @@ export const DashboardLayout = () => {
             </Button>
           </div>
         </header>
+        {/* Announcement Ticker - admin only */}
+        {role === "admin" && (
+          <div className="bg-primary/5 border-b border-border overflow-hidden shrink-0">
+            <div className="py-1.5 whitespace-nowrap animate-marquee">
+              {announcements.map((text, i) => (
+                <span key={i} className="inline-block mr-16 text-xs text-foreground font-medium">{text}</span>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Content */}
         <main className="flex-1 overflow-y-auto p-6 bg-background">
           <Outlet />
