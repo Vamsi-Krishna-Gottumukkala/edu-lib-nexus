@@ -53,6 +53,7 @@ export const adminNav: NavItem[] = [
         { title: "Transfer Book", url: "/admin/transfer-book", icon: ArrowLeftRight },
       ]},
       { title: "Book Status", icon: AlertTriangle, children: [
+        { title: "Returned Books", url: "/admin/returned-books", icon: BookCopy },
         { title: "Lost Books", url: "/admin/lost-books", icon: AlertTriangle },
         { title: "Withdraw Books", url: "/admin/withdraw-books", icon: XCircle },
       ]},
@@ -88,6 +89,7 @@ export const adminNav: NavItem[] = [
       ]},
     ],
   },
+  { title: "Guide", url: "/admin/guide", icon: BookOpen },
 ];
 
 export const studentNav: NavItem[] = [
