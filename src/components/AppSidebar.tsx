@@ -121,8 +121,8 @@ export const AppSidebar = ({ items, collapsed }: AppSidebarProps) => {
         </div>
         {!collapsed && (
           <div>
-            <h1 className="text-sm font-bold text-sidebar-accent-foreground">EduLibrary</h1>
-            <p className="text-[10px] text-sidebar-foreground/60 uppercase tracking-wider">
+            <h1 className="text-sm font-bold text-foreground">EduLibrary</h1>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
               {role === "admin" ? "Admin Portal" : "Student Portal"}
             </p>
           </div>
