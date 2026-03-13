@@ -77,6 +77,18 @@ export const DashboardLayout = () => {
 
   const results = getSearchResults(searchQuery, role);
 
+  const defaultAnnouncements = [
+    "📚 Library will remain closed on 15th March for maintenance.",
+    "🎓 New books on Artificial Intelligence have been added to the Main Library.",
+    "⏰ Library timings extended till 9 PM during exam season.",
+    "📋 Question papers for Mid Semester 2025-26 are now available for download.",
+  ];
+
+  const [announcements] = useState<string[]>(() => {
+    const saved = localStorage.getItem("edulib-announcements");
+    return saved ? JSON.parse(saved) : defaultAnnouncements;
+  });
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) setShowResults(false);

@@ -73,6 +73,7 @@ const App = () => (
               <Route path="/admin/withdraw-books" element={<WithdrawBooks />} />
               <Route path="/admin/returned-books" element={<ReturnedBooks />} />
               <Route path="/admin/guide" element={<Guide />} />
+              <Route path="/admin/announcements" element={<Announcements />} />
               <Route path="/admin/branches" element={<BranchOverview />} />
               <Route path="/admin/add-branch" element={<AddBranch />} />
               <Route path="/admin/manage-branches" element={<ManageBranches />} />
