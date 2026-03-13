@@ -88,6 +88,7 @@ export const adminNav: NavItem[] = [
       ]},
     ],
   },
+  { title: "Guide", url: "/admin/guide", icon: BookOpen },
 ];
 
 export const studentNav: NavItem[] = [
