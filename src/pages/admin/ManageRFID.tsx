@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/DataTable";
 import { getAllRFIDMappings, getRFIDByUser, upsertRFID, removeRFID } from "@/lib/services/catalog";
 import { getUserById } from "@/lib/services/users";
-import { Search, Wifi, Trash2, Loader2, CreditCard } from "lucide-react";
+import { Wifi, Trash2, Loader2, CreditCard } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRFID } from "@/contexts/RFIDContext";
 import { toast } from "sonner";
 
 export default function ManageRFID() {
@@ -20,9 +21,9 @@ export default function ManageRFID() {
 
   // Register tab state
   const [regUserId, setRegUserId]   = useState("");
-  const [regUid, setRegUid]         = useState("");
   const [regUser, setRegUser]       = useState<any>(null);
   const [regLoading, setRegLoading] = useState(false);
+  const { latestUid } = useRFID();
 
   // Edit tab state
   const [editUserId, setEditUserId]     = useState("");
@@ -42,20 +43,17 @@ export default function ManageRFID() {
     try {
       const u = await getUserById(regUserId.trim());
       setRegUser(u);
-      const existing = await getRFIDByUser(regUserId.trim());
-      if (existing) setRegUid(existing.uid);
-      else setRegUid("");
     } catch { toast.error("User not found"); setRegUser(null); }
   }
 
   async function handleRegister() {
-    if (!regUserId || !regUid) { toast.error("Enter both User ID and UID"); return; }
+    if (!regUserId || !latestUid) { toast.error("Enter a User ID and scan a card"); return; }
     setRegLoading(true);
     try {
-      await upsertRFID(regUserId.trim(), regUid.trim());
+      await upsertRFID(regUserId.trim(), latestUid.trim());
       toast.success("RFID registered!");
       qc.invalidateQueries({ queryKey: ["rfid-mappings"] });
-      setRegUser(null); setRegUserId(""); setRegUid("");
+      setRegUser(null); setRegUserId("");
     } catch (e: any) { toast.error(e.message); }
     setRegLoading(false);
   }
@@ -74,8 +72,8 @@ export default function ManageRFID() {
   async function handleUpdateRFID() {
     setSaving(true);
     try {
-      if (newUid.trim()) {
-        await upsertRFID(foundUser.user_id, newUid.trim());
+      if (latestUid.trim()) {
+        await upsertRFID(foundUser.user_id, latestUid.trim());
         toast.success("RFID updated!");
       } else {
         await removeRFID(foundUser.user_id);
@@ -120,17 +118,17 @@ export default function ManageRFID() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">RFID Card UID</label>
+                  <label className="text-xs text-muted-foreground">RFID Card UID (Waiting for scan...)</label>
                   <Input
-                    placeholder="e.g. A3F2C109"
-                    value={regUid}
-                    onChange={e => setRegUid(e.target.value.toUpperCase())}
-                    className="font-mono"
+                    placeholder="Auto-filled via Scanner"
+                    value={latestUid}
+                    readOnly
+                    className="font-mono bg-muted text-muted-foreground cursor-not-allowed"
                   />
                 </div>
-                <Button onClick={handleRegister} disabled={!regUid || regLoading} className="gap-2">
+                <Button onClick={handleRegister} disabled={!latestUid || regLoading} className="gap-2">
                   {regLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wifi className="w-4 h-4" />}
-                  {foundRFID ? "Update Card" : "Register Card"}
+                  Register Card
                 </Button>
               </div>
             )}
@@ -149,15 +147,27 @@ export default function ManageRFID() {
                 <p className="font-medium">{foundUser.user_name} <span className="text-xs text-muted-foreground">({foundUser.user_id})</span></p>
                 <p className="text-xs text-muted-foreground">Current UID: <span className="font-mono text-foreground">{foundRFID?.uid ?? "None"}</span></p>
                 <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">New UID (leave blank to remove)</label>
-                  <Input value={newUid} onChange={e => setNewUid(e.target.value.toUpperCase())} className="font-mono" placeholder="New card UID" />
+                  <label className="text-xs text-muted-foreground">New UID (Scan new card to replace)</label>
+                  <Input 
+                    value={latestUid} 
+                    readOnly 
+                    className="font-mono bg-muted text-muted-foreground cursor-not-allowed" 
+                    placeholder="Waiting for scan..." 
+                  />
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={handleUpdateRFID} disabled={saving} className="gap-1.5">
+                  <Button size="sm" onClick={handleUpdateRFID} disabled={saving || !latestUid} className="gap-1.5">
                     {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wifi className="w-3.5 h-3.5" />}
                     Update
                   </Button>
-                  <Button size="sm" variant="ghost" className="text-destructive gap-1.5" onClick={() => { setNewUid(""); handleUpdateRFID(); }} disabled={!foundRFID}>
+                  <Button size="sm" variant="ghost" className="text-destructive gap-1.5" onClick={async () => { 
+                    setSaving(true);
+                    await removeRFID(foundUser.user_id);
+                    toast.success("RFID removed");
+                    qc.invalidateQueries({ queryKey: ["rfid-mappings"] });
+                    setFoundUser(null); setFoundRFID(null); setEditUserId("");
+                    setSaving(false);
+                  }} disabled={!foundRFID}>
                     <Trash2 className="w-3.5 h-3.5" /> Remove Card
                   </Button>
                 </div>
