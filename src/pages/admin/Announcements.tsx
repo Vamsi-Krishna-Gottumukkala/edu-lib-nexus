@@ -2,40 +2,47 @@ import React, { useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Save } from "lucide-react";
+import { Plus, Trash2, Loader2, ToggleLeft, ToggleRight } from "lucide-react";
 import { toast } from "sonner";
-
-const defaultAnnouncements = [
-  "📚 Library will remain closed on 15th March for maintenance.",
-  "🎓 New books on Artificial Intelligence have been added to the Main Library.",
-  "⏰ Library timings extended till 9 PM during exam season.",
-  "📋 Question papers for Mid Semester 2025-26 are now available for download.",
-];
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getAnnouncements, addAnnouncement, deleteAnnouncement, toggleAnnouncement } from "@/lib/services/announcements";
 
 const Announcements = () => {
-  const [announcements, setAnnouncements] = useState<string[]>(() => {
-    const saved = localStorage.getItem("edulib-announcements");
-    return saved ? JSON.parse(saved) : defaultAnnouncements;
-  });
+  const queryClient = useQueryClient();
   const [newText, setNewText] = useState("");
 
-  const save = (items: string[]) => {
-    setAnnouncements(items);
-    localStorage.setItem("edulib-announcements", JSON.stringify(items));
-  };
+  const { data: announcements = [], isLoading } = useQuery({
+    queryKey: ["announcements"],
+    queryFn: () => getAnnouncements(),
+  });
 
-  const handleAdd = () => {
-    if (!newText.trim()) return toast.error("Enter announcement text");
-    save([...announcements, newText.trim()]);
-    setNewText("");
-    toast.success("Announcement added");
-  };
+  const addMutation = useMutation({
+    mutationFn: () => addAnnouncement(newText.trim()),
+    onSuccess: () => {
+      setNewText("");
+      toast.success("Announcement added");
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
+    },
+    onError: () => toast.error("Failed to add announcement"),
+  });
 
-  const handleDelete = (index: number) => {
-    save(announcements.filter((_, i) => i !== index));
-    toast.success("Announcement removed");
-  };
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteAnnouncement(id),
+    onSuccess: () => {
+      toast.success("Announcement deleted");
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
+    },
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: ({ id, isActive }: { id: number; isActive: boolean }) =>
+      toggleAnnouncement(id, isActive),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
+    },
+  });
+
+  const activeOnes = announcements.filter((a: any) => a.is_active);
 
   return (
     <div className="animate-fade-in max-w-3xl">
@@ -49,26 +56,43 @@ const Announcements = () => {
               placeholder="Enter announcement text..."
               value={newText}
               onChange={e => setNewText(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleAdd()}
+              onKeyDown={e => e.key === "Enter" && newText.trim() && addMutation.mutate()}
             />
           </div>
-          <Button onClick={handleAdd}>
-            <Plus className="h-4 w-4 mr-1" /> Add
+          <Button onClick={() => addMutation.mutate()} disabled={!newText.trim() || addMutation.isPending}>
+            {addMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="h-4 w-4 mr-1" />Add</>}
           </Button>
         </div>
       </div>
 
       <div className="bg-card rounded-xl p-5 border border-border/50 card-shadow">
-        <h3 className="text-sm font-semibold text-card-foreground mb-3">Current Announcements ({announcements.length})</h3>
-        {announcements.length === 0 ? (
+        <h3 className="text-sm font-semibold text-card-foreground mb-3">
+          All Announcements ({announcements.length})
+        </h3>
+        {isLoading ? (
+          <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+        ) : announcements.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-6">No announcements. Add one above.</p>
         ) : (
           <div className="space-y-2">
-            {announcements.map((text, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/30">
-                <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
-                <p className="text-sm text-card-foreground flex-1">{text}</p>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(i)}>
+            {announcements.map((ann: any) => (
+              <div key={ann.id} className={`flex items-center gap-3 p-3 rounded-lg border ${ann.is_active ? "bg-muted/50 border-border/30" : "bg-muted/20 border-border/10 opacity-60"}`}>
+                <span className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center shrink-0 ${ann.is_active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                  {ann.id}
+                </span>
+                <p className="text-sm text-card-foreground flex-1">{ann.text}</p>
+                <button
+                  onClick={() => toggleMutation.mutate({ id: ann.id, isActive: !ann.is_active })}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  title={ann.is_active ? "Deactivate" : "Activate"}
+                >
+                  {ann.is_active ? <ToggleRight className="w-5 h-5 text-green-500" /> : <ToggleLeft className="w-5 h-5" />}
+                </button>
+                <Button
+                  variant="ghost" size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                  onClick={() => deleteMutation.mutate(ann.id)}
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -77,16 +101,18 @@ const Announcements = () => {
         )}
       </div>
 
-      <div className="mt-6 bg-primary/5 rounded-xl p-5 border border-primary/20">
-        <h3 className="text-sm font-semibold text-card-foreground mb-2">Preview</h3>
-        <div className="overflow-hidden rounded-lg bg-card border border-border">
-          <div className="py-2 px-4 whitespace-nowrap animate-marquee">
-            {announcements.map((text, i) => (
-              <span key={i} className="inline-block mr-16 text-sm text-foreground">{text}</span>
-            ))}
+      {activeOnes.length > 0 && (
+        <div className="mt-6 bg-primary/5 rounded-xl p-5 border border-primary/20">
+          <h3 className="text-sm font-semibold text-card-foreground mb-2">Live Preview</h3>
+          <div className="overflow-hidden rounded-lg bg-card border border-border">
+            <div className="py-2 px-4 whitespace-nowrap animate-marquee">
+              {activeOnes.map((ann: any) => (
+                <span key={ann.id} className="inline-block mr-16 text-sm text-foreground">{ann.text}</span>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -4,7 +4,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import Login from "@/pages/Login";
 import NotFound from "./pages/NotFound.tsx";
 
 // Admin pages
@@ -27,6 +29,12 @@ import ReportIssued from "@/pages/admin/ReportIssued";
 import ReturnedBooks from "@/pages/admin/ReturnedBooks";
 import Guide from "@/pages/admin/Guide";
 import Announcements from "@/pages/admin/Announcements";
+import AttendanceReport from "@/pages/admin/AttendanceReport";
+import ManageStudents from "@/pages/admin/ManageStudents";
+import ManageFaculty from "@/pages/admin/ManageFaculty";
+import ManageRFID from "@/pages/admin/ManageRFID";
+import ManagePrograms from "@/pages/admin/ManagePrograms";
+import ManageDepartments from "@/pages/admin/ManageDepartments";
 
 // Student pages
 import StudentDashboard from "@/pages/student/StudentDashboard";
@@ -40,7 +48,14 @@ import {
   BrowsePapers, DownloadPapers, MyVisits, AttendanceHistory, StudentProfile,
 } from "@/pages/GenericPages";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 2, // 2 min cache
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -50,9 +65,18 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/admin" replace />} />
-            <Route element={<DashboardLayout />}>
-              {/* Admin routes */}
+            {/* Public */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<Navigate to="/login" replace />} />
+
+            {/* Protected — Admin */}
+            <Route
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/rfid-logs" element={<RFIDLogs />} />
               <Route path="/admin/registered-users" element={<RegisteredUsers />} />
@@ -84,8 +108,22 @@ const App = () => (
               <Route path="/admin/report-visits" element={<ReportVisits />} />
               <Route path="/admin/users" element={<UserManagement />} />
               <Route path="/admin/settings" element={<SystemSettings />} />
+              <Route path="/admin/attendance-report" element={<AttendanceReport />} />
+              <Route path="/admin/manage-students" element={<ManageStudents />} />
+              <Route path="/admin/manage-faculty" element={<ManageFaculty />} />
+              <Route path="/admin/manage-rfid" element={<ManageRFID />} />
+              <Route path="/admin/manage-programs" element={<ManagePrograms />} />
+              <Route path="/admin/manage-departments" element={<ManageDepartments />} />
+            </Route>
 
-              {/* Student routes */}
+            {/* Protected — Student */}
+            <Route
+              element={
+                <ProtectedRoute requiredRole="student">
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
               <Route path="/student" element={<StudentDashboard />} />
               <Route path="/student/issued-books" element={<StudentIssuedBooks />} />
               <Route path="/student/due-books" element={<StudentDueBooks />} />
@@ -97,6 +135,7 @@ const App = () => (
               <Route path="/student/attendance-history" element={<AttendanceHistory />} />
               <Route path="/student/profile" element={<StudentProfile />} />
             </Route>
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

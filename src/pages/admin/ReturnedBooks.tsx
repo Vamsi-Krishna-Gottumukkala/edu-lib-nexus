@@ -1,37 +1,57 @@
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/PageHeader";
 import { DataTable } from "@/components/DataTable";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { getReturnedBooks } from "@/lib/services/issues";
+import { fmtDate } from "@/lib/utils";
 
-const returnedRecords = [
-  { accessionNumber: "ACC1020", title: "Compiler Design", returnedBy: "STU2024001", returnDate: "2026-03-10", issueDate: "2026-02-24", fine: "₹0" },
-  { accessionNumber: "ACC1021", title: "Discrete Mathematics", returnedBy: "STU2024003", returnDate: "2026-03-08", issueDate: "2026-02-20", fine: "₹10" },
-  { accessionNumber: "ACC1022", title: "Software Engineering", returnedBy: "STU2024002", returnDate: "2026-03-05", issueDate: "2026-02-18", fine: "₹0" },
-  { accessionNumber: "ACC1023", title: "Theory of Computation", returnedBy: "STU2024004", returnDate: "2026-03-03", issueDate: "2026-02-15", fine: "₹15" },
-  { accessionNumber: "ACC1024", title: "Artificial Intelligence", returnedBy: "STU2024005", returnDate: "2026-03-01", issueDate: "2026-02-12", fine: "₹25" },
-];
+const ReturnedBooks = () => {
+  const { data: returned = [], isLoading } = useQuery({
+    queryKey: ["returned-books"],
+    queryFn: () => getReturnedBooks(200),
+  });
 
-const ReturnedBooks = () => (
-  <div className="animate-fade-in">
-    <PageHeader title="Returned Books" description="All books that have been returned to the library">
-      <Button variant="outline" onClick={() => toast.success("Report exported as PDF")}><Download className="h-4 w-4 mr-1" /> Export PDF</Button>
-    </PageHeader>
-    <DataTable
-      columns={[
-        { header: "Accession No.", accessor: "accessionNumber" },
-        { header: "Title", accessor: "title" },
-        { header: "Returned By", accessor: "returnedBy" },
-        { header: "Issue Date", accessor: "issueDate" },
-        { header: "Return Date", accessor: "returnDate" },
-        { header: "Fine", accessor: "fine" },
-        { header: "Status", accessor: () => <StatusBadge status="Available" /> },
-      ]}
-      data={returnedRecords}
-    />
-  </div>
-);
+  return (
+    <div className="animate-fade-in">
+      <PageHeader title="Returned Books" description={`${returned.length} books returned to library`}>
+        <Button variant="outline" onClick={() => toast.info("Export feature coming soon")}>
+          <Download className="h-4 w-4 mr-1" /> Export
+        </Button>
+      </PageHeader>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : returned.length === 0 ? (
+        <div className="bg-card rounded-xl p-12 border border-border/50 text-center">
+          <p className="text-muted-foreground">No returned books yet.</p>
+        </div>
+      ) : (
+        <DataTable
+          columns={[
+            { header: "Accession No.", accessor: "accession_number" },
+            { header: "Title", accessor: (row: any) => row.book_copies?.title || "—" },
+            { header: "Returned By", accessor: (row: any) => row.users?.user_name || row.user_id },
+            { header: "Issue Date", accessor: (row: any) => fmtDate(row.issue_date) },
+            { header: "Return Date", accessor: (row: any) => fmtDate(row.return_date) },
+            {
+              header: "Fine",
+              accessor: (row: any) =>
+                row.fine_amount > 0 ? (
+                  <span className="text-red-500 font-medium">₹{row.fine_amount}</span>
+                ) : "₹0",
+            },
+            { header: "Status", accessor: () => <StatusBadge status="Available" /> },
+          ]}
+          data={returned}
+        />
+      )}
+    </div>
+  );
+};
 
 export default ReturnedBooks;

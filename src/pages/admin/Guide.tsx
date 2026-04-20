@@ -48,7 +48,7 @@ const Guide = () => (
       <p>Shows only books with "Available" status, ready to be issued.</p>
       <h3 className="font-semibold text-card-foreground mt-2">Add Book</h3>
       <Step n={1} text="Go to Books Inventory → Books → Add Book." />
-      <Step n={2} text="Fill in the Accession Number, Title, Author, ISBN, Category, and Branch." />
+      <Step n={2} text="Fill in the Accession Number, Title, Author, ISBN, and Branch." />
       <Step n={3} text="Click 'Add Book' to add the copy to inventory." />
     </Section>
 

@@ -105,7 +105,7 @@ function checkChildActive(items: NavItem[], pathname: string): boolean {
 }
 
 export const AppSidebar = ({ items, collapsed }: AppSidebarProps) => {
-  const { role, setRole, userName, userId } = useAuth();
+  const { role, userName, userId, signOut } = useAuth();
 
   return (
     <aside
@@ -136,27 +136,37 @@ export const AppSidebar = ({ items, collapsed }: AppSidebarProps) => {
         ))}
       </nav>
 
-      {/* Role Switcher & User */}
-      <div className="border-t border-sidebar-border p-3 space-y-2 shrink-0">
-        {!collapsed && (
-          <button
-            onClick={() => setRole(role === "admin" ? "student" : "admin")}
-            className="w-full text-[11px] py-1.5 rounded-md bg-sidebar-accent text-sidebar-foreground hover:bg-sidebar-muted transition-colors"
-          >
-            Switch to {role === "admin" ? "Student" : "Admin"} View
-          </button>
-        )}
+      {/* User & Sign Out */}
+      <div className="border-t border-sidebar-border p-3 shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center shrink-0">
             <span className="text-xs font-semibold text-sidebar-primary">
-              {userName.split(" ").map((n) => n[0]).join("")}
+              {userName ? userName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() : "?"}
             </span>
           </div>
           {!collapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-sidebar-accent-foreground truncate">{userName}</p>
-              <p className="text-[10px] text-sidebar-foreground/60">{userId}</p>
-            </div>
+            <>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-sidebar-accent-foreground truncate">{userName}</p>
+                <p className="text-[10px] text-sidebar-foreground/60 capitalize">{role}</p>
+              </div>
+              <button
+                onClick={signOut}
+                title="Sign Out"
+                className="w-7 h-7 flex items-center justify-center rounded-md text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            </>
+          )}
+          {collapsed && (
+            <button
+              onClick={signOut}
+              title="Sign Out"
+              className="w-7 h-7 flex items-center justify-center rounded-md text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </button>
           )}
         </div>
       </div>
