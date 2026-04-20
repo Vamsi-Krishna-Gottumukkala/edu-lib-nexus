@@ -87,9 +87,9 @@ app.post("/api/scan", async (req, res) => {
     const { user_id, users } = rfidRow;
     const user_name = users?.user_name || user_id;
     const user_type = users?.user_type || "unknown";
-    const today = new Date().toISOString().split("T")[0];
-    const now = new Date();
-    const time = now.toTimeString().slice(0, 8); // HH:MM:SS
+    const tzConfig = { timeZone: 'Asia/Kolkata', hour12: false };
+    const today = new Date().toLocaleDateString('en-CA', tzConfig); // YYYY-MM-DD
+    const time = new Date().toLocaleTimeString('en-GB', tzConfig); // HH:MM:SS
 
     // 3. Find Open Attendance Log
     const { data: openLog, error: logErr } = await supabase
