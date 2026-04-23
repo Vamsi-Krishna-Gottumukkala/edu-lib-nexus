@@ -8,8 +8,8 @@ import { toast } from "sonner";
 import { Upload, File, Loader2, X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { uploadPaper } from "@/lib/services/papers";
+import { supabase } from "@/lib/supabase";
 
-const DEPARTMENTS = ["Computer Science", "AI & ML", "Electronics", "Mechanical", "Civil", "MBA", "BBA", "BCA"];
 const EXAM_TYPES = ["End Semester", "Mid Semester", "Supplementary", "Internal Assessment"];
 
 const UploadPaper = () => {
@@ -19,6 +19,15 @@ const UploadPaper = () => {
   const [form, setForm] = useState({
     subject_name: "", subject_code: "", department: "",
     semester: "", exam_type: "", academic_year: "",
+  });
+
+  const { data: departments = [] } = useQuery({
+    queryKey: ["departments"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("departments").select("department_name").order("department_name");
+      if (error) throw error;
+      return data.map(d => d.department_name);
+    }
   });
 
   const upd = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
@@ -73,7 +82,7 @@ const UploadPaper = () => {
               <Label>Department *</Label>
               <Select value={form.department} onValueChange={v => upd("department", v)}>
                 <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{DEPARTMENTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
+                <SelectContent>{departments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>

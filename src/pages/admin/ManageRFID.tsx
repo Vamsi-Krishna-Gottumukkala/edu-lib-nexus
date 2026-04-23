@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/DataTable";
 import { getAllRFIDMappings, getRFIDByUser, upsertRFID, removeRFID } from "@/lib/services/catalog";
 import { getUserById } from "@/lib/services/users";
-import { Wifi, Trash2, Loader2, CreditCard } from "lucide-react";
+import { Wifi, Trash2, Loader2, CreditCard, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRFID } from "@/contexts/RFIDContext";
 import { toast } from "sonner";

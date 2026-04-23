@@ -26,8 +26,9 @@ export async function deleteProgram(programId: number) {
     .select('*', { count: 'exact', head: true })
     .eq('program_id', programId)
   if (count && count > 0) throw new Error(`Cannot delete: ${count} students are in this program.`)
-  const { error } = await supabase.from('programs').delete().eq('program_id', programId)
+  const { data, error } = await supabase.from('programs').delete().eq('program_id', programId).select()
   if (error) throw error
+  if (!data || data.length === 0) throw new Error("Delete failed (Access denied or not found)")
 }
 
 // ─── Departments ───────────────────────────────────────────────
@@ -52,8 +53,9 @@ export async function deleteDepartment(departmentId: number) {
     .select('*', { count: 'exact', head: true })
     .eq('department_id', departmentId)
   if (count && count > 0) throw new Error(`Cannot delete: ${count} faculty are in this department.`)
-  const { error } = await supabase.from('departments').delete().eq('department_id', departmentId)
+  const { data, error } = await supabase.from('departments').delete().eq('department_id', departmentId).select()
   if (error) throw error
+  if (!data || data.length === 0) throw new Error("Delete failed (Access denied or not found)")
 }
 
 // ─── RFID ─────────────────────────────────────────────────────
