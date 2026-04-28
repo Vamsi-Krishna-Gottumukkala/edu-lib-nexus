@@ -1,4 +1,5 @@
 import { supabase, LibUser } from '../supabase'
+import { toTitleCase } from '../utils'
 
 /** All user queries accept an optional branchId.
  *  - branchId = null  → super-admin; returns all users
@@ -67,6 +68,7 @@ export async function addStudent(data: {
 }) {
   const { error } = await supabase.from('users').insert({
     ...data,
+    user_name: toTitleCase(data.user_name),
     user_type: 'student',
   })
   if (error) throw error
@@ -81,13 +83,15 @@ export async function addFaculty(data: {
 }) {
   const { error } = await supabase.from('users').insert({
     ...data,
+    user_name: toTitleCase(data.user_name),
     user_type: 'faculty',
   })
   if (error) throw error
 }
 
 export async function updateUser(userId: string, data: Partial<LibUser>) {
-  const { error } = await supabase.from('users').update(data).eq('user_id', userId)
+  const normalized = data.user_name ? { ...data, user_name: toTitleCase(data.user_name) } : data
+  const { error } = await supabase.from('users').update(normalized).eq('user_id', userId)
   if (error) throw error
 }
 
@@ -107,7 +111,11 @@ export async function bulkInsertStudents(rows: Array<{
   program_id: number | null
   branch_id: number | null
 }>) {
-  const payload = rows.map(r => ({ ...r, user_type: 'student' as const }))
+  const payload = rows.map(r => ({
+    ...r,
+    user_name: toTitleCase(r.user_name),
+    user_type: 'student' as const,
+  }))
   const { error } = await supabase.from('users').upsert(payload, { onConflict: 'user_id' })
   if (error) throw error
   return rows.length
@@ -121,7 +129,11 @@ export async function bulkInsertFaculty(rows: Array<{
   department_id: number | null
   branch_id: number | null
 }>) {
-  const payload = rows.map(r => ({ ...r, user_type: 'faculty' as const }))
+  const payload = rows.map(r => ({
+    ...r,
+    user_name: toTitleCase(r.user_name),
+    user_type: 'faculty' as const,
+  }))
   const { error } = await supabase.from('users').upsert(payload, { onConflict: 'user_id' })
   if (error) throw error
   return rows.length

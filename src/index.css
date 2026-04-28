@@ -84,7 +84,17 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Normalize person names to Title Case regardless of how they're stored */
+  .name-cell {
+    text-transform: lowercase;
+  }
+  .name-cell::first-letter,
+  .name-cell > span::first-letter {
+    text-transform: uppercase;
+  }
 }
+
 
 @keyframes marquee {
   0% { transform: translateX(100%); }

@@ -12,7 +12,8 @@ import { fmtDate } from "@/lib/utils";
 import { getPapers } from "@/lib/services/papers";
 
 const StudentDashboard = () => {
-  const { userId, userName } = useAuth();
+  const { userId, userName, studentData } = useAuth();
+  const branchId = studentData?.branch_id ?? null;
 
   const { data: myBooks = [], isLoading: booksLoading } = useQuery({
     queryKey: ["student-issued", userId],
@@ -27,8 +28,8 @@ const StudentDashboard = () => {
   });
 
   const { data: papers = [] } = useQuery({
-    queryKey: ["papers"],
-    queryFn: () => getPapers(),
+    queryKey: ["papers", branchId],
+    queryFn: () => getPapers(branchId != null ? { branch_id: branchId } : undefined),
   });
 
   const dueBooks = myBooks.filter((b: any) => b.due_date && new Date(b.due_date) < new Date());
