@@ -39,8 +39,8 @@ const AdminDashboard = () => {
     queryFn:  () => getReturnedBooks(10),
   });
   const { data: papers = [] } = useQuery({
-    queryKey: ["papers"],
-    queryFn:  () => getPapers(),
+    queryKey: ["papers", branchId],
+    queryFn:  () => getPapers(branchId != null ? { branch_id: branchId } : undefined),
   });
   const { data: attendanceStats = [] } = useQuery({
     queryKey: ["attendance-stats", branchId],

@@ -18,7 +18,8 @@ export async function getPapers(filters?: {
   if (filters?.exam_type) query = query.eq('exam_type', filters.exam_type)
   if (filters?.academic_year) query = query.eq('academic_year', filters.academic_year)
   if (filters?.search) query = query.ilike('subject_name', `%${filters.search}%`)
-  if (filters?.branch_id != null) query = query.eq('branch_id', filters.branch_id)
+  if (filters?.branch_id != null)
+    query = query.or(`branch_id.eq.${filters.branch_id},branch_id.is.null`)
 
   const { data, error } = await query
   if (error) throw error

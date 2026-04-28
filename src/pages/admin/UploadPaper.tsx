@@ -9,10 +9,13 @@ import { Upload, File, Loader2, X } from "lucide-react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { uploadPaper } from "@/lib/services/papers";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 const EXAM_TYPES = ["End Semester", "Mid Semester", "Supplementary", "Internal Assessment"];
 
 const UploadPaper = () => {
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -42,6 +45,7 @@ const UploadPaper = () => {
           semester: form.semester ? parseInt(form.semester) : null,
           exam_type: form.exam_type || null,
           academic_year: form.academic_year || null,
+          branch_id: branchId,
         },
         selectedFile!
       ),

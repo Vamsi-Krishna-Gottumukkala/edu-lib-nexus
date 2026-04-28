@@ -82,9 +82,12 @@ export const VisitHistory = () => {
 /* ── Admin: Manage Papers ── */
 export const ManagePapers = () => {
   const queryClient = useQueryClient();
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
+
   const { data: papers = [], isLoading } = useQuery({
-    queryKey: ["papers"],
-    queryFn: () => getPapers(),
+    queryKey: ["papers", branchId],
+    queryFn: () => getPapers(branchId != null ? { branch_id: branchId } : undefined),
   });
 
   const deleteMutation = useMutation({
@@ -145,9 +148,12 @@ export const ManagePapers = () => {
 
 /* ── Admin: Download Analytics ── */
 export const DownloadAnalytics = () => {
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
+
   const { data: papers = [] } = useQuery({
-    queryKey: ["papers"],
-    queryFn: () => getPapers(),
+    queryKey: ["papers", branchId],
+    queryFn: () => getPapers(branchId != null ? { branch_id: branchId } : undefined),
   });
 
   const totalDownloads = papers.reduce((a: number, p: any) => a + (p.downloads || 0), 0);
@@ -187,9 +193,12 @@ export const DownloadAnalytics = () => {
 
 /* ── Admin: Subject Popularity ── */
 export const SubjectPopularity = () => {
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
+
   const { data: papers = [] } = useQuery({
-    queryKey: ["papers"],
-    queryFn: () => getPapers(),
+    queryKey: ["papers", branchId],
+    queryFn: () => getPapers(branchId != null ? { branch_id: branchId } : undefined),
   });
 
   const sorted = [...papers].sort((a: any, b: any) => (b.downloads || 0) - (a.downloads || 0));
@@ -791,12 +800,15 @@ export const BranchAvailability = () => {
 export const BrowsePapers = () => {
   const [search, setSearch] = useState("");
   const [dept, setDept] = useState("all");
+  const { studentData } = useAuth();
+  const branchId = studentData?.branch_id ?? null;
 
   const { data: papers = [], isLoading } = useQuery({
-    queryKey: ["papers", search, dept],
+    queryKey: ["papers", search, dept, branchId],
     queryFn: () => getPapers({
       search: search || undefined,
       department: dept !== "all" ? dept : undefined,
+      branch_id: branchId,
     }),
   });
 
@@ -850,9 +862,12 @@ export const BrowsePapers = () => {
 /* ── Student: Download Papers ── */
 export const DownloadPapers = () => {
   const queryClient = useQueryClient();
+  const { studentData } = useAuth();
+  const branchId = studentData?.branch_id ?? null;
+
   const { data: papers = [], isLoading } = useQuery({
-    queryKey: ["papers"],
-    queryFn: () => getPapers(),
+    queryKey: ["papers", branchId],
+    queryFn: () => getPapers(branchId != null ? { branch_id: branchId } : undefined),
   });
 
   const handleDownload = async (paper: any) => {

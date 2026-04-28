@@ -5,11 +5,15 @@ import { DataTable } from "@/components/DataTable";
 import { StatsCard } from "@/components/StatsCard";
 import { FileText, Download, TrendingUp, Loader2 } from "lucide-react";
 import { getPapers } from "@/lib/services/papers";
+import { useAuth } from "@/contexts/AuthContext";
 
 const QPDashboard = () => {
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
+
   const { data: papers = [], isLoading } = useQuery({
-    queryKey: ["papers"],
-    queryFn: () => getPapers(),
+    queryKey: ["papers", branchId],
+    queryFn: () => getPapers(branchId != null ? { branch_id: branchId } : undefined),
   });
 
   const totalDownloads = papers.reduce((a: number, p: any) => a + (p.downloads || 0), 0);

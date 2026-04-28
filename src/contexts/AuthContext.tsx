@@ -18,6 +18,7 @@ export interface StudentSession {
   program_id: number | null;
   year: number | null;
   department_id: number | null;
+  branch_id: number | null;
 }
 
 export interface AdminBranchInfo {
