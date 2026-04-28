@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { createClient } from "@supabase/supabase-js";
+import cron from "node-cron";
 
 const app = express();
 app.use(cors());
@@ -141,3 +142,35 @@ app.listen(PORT, () => {
   console.log(`   API Secret: ${API_SECRET_KEY}`);
   console.log(`   Waiting for scans...\n`);
 });
+
+// ─── Auto-Logout Cron (runs at 7:30 PM IST, stamps 7:00 PM logout) ───
+// 30-minute safe window: runs at 19:30 IST but records logout_time as 19:00:00.
+cron.schedule("30 19 * * *", async () => {
+  const tzConfig = { timeZone: "Asia/Kolkata", hour12: false };
+  const today = new Date().toLocaleDateString("en-CA", tzConfig);
+  const logoutTime = "19:00:00";
+
+  console.log(`\n⏰ [CRON] Running 7PM auto-logout for ${today}...`);
+
+  const { data, error } = await supabase
+    .from("attendance_log")
+    .update({ logout_time: logoutTime })
+    .eq("log_date", today)
+    .is("logout_time", null)
+    .select();
+
+  if (error) {
+    console.error("❌ [CRON] Auto-logout failed:", error.message);
+  } else {
+    const count = data?.length ?? 0;
+    console.log(`✅ [CRON] Auto-logged out ${count} student(s) at 7PM.`);
+    if (count > 0) {
+      broadcast({ type: "auto_logout", count, date: today });
+    }
+  }
+}, {
+  timezone: "Asia/Kolkata",
+});
+
+console.log("⏰ Auto-logout cron scheduled for 7:00 PM IST daily.");
+
