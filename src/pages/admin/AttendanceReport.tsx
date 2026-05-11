@@ -12,6 +12,7 @@ import { FileDown, Search, Loader2, Filter } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { fmtDate } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 type UserType = "student" | "faculty";
 

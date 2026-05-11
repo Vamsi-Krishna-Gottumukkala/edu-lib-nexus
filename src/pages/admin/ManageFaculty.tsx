@@ -14,8 +14,8 @@ import * as XLSX from "xlsx";
 
 export default function ManageFaculty() {
   const qc = useQueryClient();
-  const { adminBranch } = useAuth();
-  const branchId = adminBranch?.branch_id ?? null;
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
   const [form, setForm] = useState({ user_id: "", user_name: "", designation: "", department_id: "" });
   const [searchId, setSearchId] = useState("");
   const [foundUser, setFoundUser] = useState<any>(null);
@@ -23,8 +23,6 @@ export default function ManageFaculty() {
   const [deleting, setDeleting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const { adminBranch, isSuperAdmin } = useAuth();
-  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
   const { data: departments = [] } = useQuery({ queryKey: ["departments", branchId], queryFn: () => getDepartments(branchId) });
 
   const addMut = useMutation({

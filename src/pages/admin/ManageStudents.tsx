@@ -16,8 +16,8 @@ import * as XLSX from "xlsx";
 
 export default function ManageStudents() {
   const qc = useQueryClient();
-  const { adminBranch } = useAuth();
-  const branchId = adminBranch?.branch_id ?? null;
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
   const [form, setForm] = useState({ user_id: "", user_name: "", year: "", program_id: "" });
   const [searchId, setSearchId] = useState("");
   const [foundUser, setFoundUser] = useState<any>(null);
@@ -28,8 +28,6 @@ export default function ManageStudents() {
   const [deleting, setDeleting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const { adminBranch, isSuperAdmin } = useAuth();
-  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
   const { data: programs = [] } = useQuery({ queryKey: ["programs", branchId], queryFn: () => getPrograms(branchId) });
 
   // Add single student

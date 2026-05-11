@@ -317,7 +317,19 @@ export const ReportLost = () => {
   return (
     <div className="animate-fade-in">
       <PageHeader title="Lost Books Report" description={`${lost.length} books reported lost`}>
-        <Button variant="outline" onClick={() => toast.info("Export coming soon")}>
+        <Button variant="outline" onClick={() => {
+          if (!lost || lost.length === 0) {
+            toast.error("Nothing to export");
+            return;
+          }
+          exportToCSV(lost.map((l: any) => ({
+            'Accession No': l.accession_number,
+            'Title': l.title,
+            'Author': l.author,
+            'Branch': l.library_branches?.name || '—',
+            'Status': 'Lost'
+          })), 'lost_books_report');
+        }}>
           <Download className="h-4 w-4 mr-1" /> Export
         </Button>
       </PageHeader>
@@ -353,7 +365,19 @@ export const ReportWithdrawn = () => {
   return (
     <div className="animate-fade-in">
       <PageHeader title="Withdrawn Books Report" description={`${withdrawn.length} books withdrawn`}>
-        <Button variant="outline" onClick={() => toast.info("Export coming soon")}>
+        <Button variant="outline" onClick={() => {
+          if (!withdrawn || withdrawn.length === 0) {
+            toast.error("Nothing to export");
+            return;
+          }
+          exportToCSV(withdrawn.map((w: any) => ({
+            'Accession No': w.accession_number,
+            'Title': w.title,
+            'Author': w.author,
+            'Branch': w.library_branches?.name || '—',
+            'Status': 'Withdrawn'
+          })), 'withdrawn_books_report');
+        }}>
           <Download className="h-4 w-4 mr-1" /> Export
         </Button>
       </PageHeader>

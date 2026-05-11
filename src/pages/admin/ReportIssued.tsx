@@ -21,14 +21,20 @@ const ReportIssued = () => {
   return (
     <div className="animate-fade-in">
       <PageHeader title="Issued Books Report" description={`${issued.length} books currently issued`}>
-        <Button variant="outline" onClick={() => exportToCSV(issued.map((i: any) => ({
-          'Accession No': i.accession_number,
-          'Title': i.book_copies?.title,
-          'Issued To': i.users?.user_name || i.user_id,
-          'Issue Date': fmtDate(i.issue_date),
-          'Due Date': fmtDate(i.due_date),
-          'Overdue': new Date(i.due_date) < new Date() ? 'Yes' : 'No'
-        })), 'issued_books_report')}>
+        <Button variant="outline" onClick={() => {
+          if (!issued || issued.length === 0) {
+            toast.error("Nothing to export");
+            return;
+          }
+          exportToCSV(issued.map((i: any) => ({
+            'Accession No': i.accession_number,
+            'Title': i.book_copies?.title,
+            'Issued To': i.users?.user_name || i.user_id,
+            'Issue Date': fmtDate(i.issue_date),
+            'Due Date': fmtDate(i.due_date),
+            'Overdue': new Date(i.due_date) < new Date() ? 'Yes' : 'No'
+          })), 'issued_books_report');
+        }}>
           <Download className="h-4 w-4 mr-1" /> Export
         </Button>
       </PageHeader>
