@@ -7,18 +7,34 @@ import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getReturnedBooks } from "@/lib/services/issues";
-import { fmtDate } from "@/lib/utils";
+import { fmtDate, exportToCSV } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ReturnedBooks = () => {
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
   const { data: returned = [], isLoading } = useQuery({
-    queryKey: ["returned-books"],
-    queryFn: () => getReturnedBooks(200),
+    queryKey: ["returned-books", branchId],
+    queryFn: () => getReturnedBooks(200, branchId),
   });
 
   return (
     <div className="animate-fade-in">
       <PageHeader title="Returned Books" description={`${returned.length} books returned to library`}>
-        <Button variant="outline" onClick={() => toast.info("Export feature coming soon")}>
+        <Button variant="outline" onClick={() => {
+          if (!returned || returned.length === 0) {
+            toast.error("Nothing to export");
+            return;
+          }
+          exportToCSV(returned.map((r: any) => ({
+            'Accession No': r.accession_number,
+            'Title': r.book_copies?.title || '—',
+            'Returned By': r.users?.user_name || r.user_id,
+            'Issue Date': fmtDate(r.issue_date),
+            'Return Date': fmtDate(r.return_date),
+            'Fine Amount': r.fine_amount || 0
+          })), 'returned_books_report');
+        }}>
           <Download className="h-4 w-4 mr-1" /> Export
         </Button>
       </PageHeader>
