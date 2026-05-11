@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { fmtDate } from "@/lib/utils";
+import { fmtDate, exportToCSV } from "@/lib/utils";
 
 // Services
 import { getAttendanceLogs, getStudentAttendanceLogs, getAttendanceStats } from "@/lib/services/attendance";
@@ -30,17 +30,23 @@ import { getSettings, updateSettings } from "@/lib/services/settings";
 
 /* ── Admin: Student Visit History ── */
 export const VisitHistory = () => {
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
   const { data: logs = [], isLoading } = useQuery({
-    queryKey: ["visit-history"],
-    queryFn: () => getVisitHistory(),
+    queryKey: ["visit-history", branchId],
+    queryFn: () => getVisitHistory(branchId),
   });
 
-  async function getVisitHistory() {
+  async function getVisitHistory(branchId: number | null) {
     const { supabase } = await import("@/lib/supabase");
-    const { data } = await supabase
+    let query = supabase
       .from("attendance_log")
-      .select("user_id, log_date, users(user_name, programs(branch_name))")
+      .select("user_id, log_date, users!inner(user_name, branch_id, programs(branch_name))")
       .order("log_date", { ascending: false });
+
+    if (branchId != null) query = query.eq("users.branch_id", branchId);
+
+    const { data } = await query;
 
     const grouped: Record<string, any> = {};
     data?.forEach((log: any) => {
@@ -371,20 +377,18 @@ export const ReportWithdrawn = () => {
 
 /* ── Admin: Report Gate ── */
 export const ReportGate = () => {
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
   const { data: logs = [], isLoading } = useQuery({
-    queryKey: ["rfid-logs"],
-    queryFn: () => getAttendanceLogs(),
+    queryKey: ["rfid-logs", branchId],
+    queryFn: () => getAttendanceLogs(undefined, branchId),
   });
   const today = new Date().toISOString().split("T")[0];
   const todayCount = logs.filter((l: any) => l.log_date === today).length;
 
   return (
     <div className="animate-fade-in">
-      <PageHeader title="Gate Register Report" description="Library gate entry/exit attendance report">
-        <Button variant="outline" onClick={() => toast.info("Export coming soon")}>
-          <Download className="h-4 w-4 mr-1" /> Export
-        </Button>
-      </PageHeader>
+      <PageHeader title="Gate Register Report" description="Library gate entry/exit attendance report" />
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatsCard title="Today's Visitors" value={todayCount} icon={DoorOpen} color="primary" />
         <StatsCard title="Total Records" value={logs.length} icon={Users} color="info" />
@@ -426,11 +430,7 @@ export const ReportVisits = () => {
 
   return (
     <div className="animate-fade-in">
-      <PageHeader title="Library Visits Report" description="Comprehensive visit analytics">
-        <Button variant="outline" onClick={() => toast.info("Export coming soon")}>
-          <Download className="h-4 w-4 mr-1" /> Export
-        </Button>
-      </PageHeader>
+      <PageHeader title="Library Visits Report" description="Comprehensive visit analytics" />
       <div className="bg-card rounded-xl p-5 border border-border/50 card-shadow mb-6">
         <h3 className="text-sm font-semibold text-card-foreground mb-4">Daily Visits (Last 14 Days)</h3>
         <ResponsiveContainer width="100%" height={280}>

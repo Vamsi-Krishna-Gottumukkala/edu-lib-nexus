@@ -7,18 +7,28 @@ import { Button } from "@/components/ui/button";
 import { Download, Loader2, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { getIssuedBooks } from "@/lib/services/issues";
-import { fmtDate } from "@/lib/utils";
+import { fmtDate, exportToCSV } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ReportIssued = () => {
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
   const { data: issued = [], isLoading } = useQuery({
-    queryKey: ["issued-books"],
-    queryFn: () => getIssuedBooks(),
+    queryKey: ["issued-books", branchId],
+    queryFn: () => getIssuedBooks(undefined, branchId),
   });
 
   return (
     <div className="animate-fade-in">
       <PageHeader title="Issued Books Report" description={`${issued.length} books currently issued`}>
-        <Button variant="outline" onClick={() => toast.info("Export feature coming soon")}>
+        <Button variant="outline" onClick={() => exportToCSV(issued.map((i: any) => ({
+          'Accession No': i.accession_number,
+          'Title': i.book_copies?.title,
+          'Issued To': i.users?.user_name || i.user_id,
+          'Issue Date': fmtDate(i.issue_date),
+          'Due Date': fmtDate(i.due_date),
+          'Overdue': new Date(i.due_date) < new Date() ? 'Yes' : 'No'
+        })), 'issued_books_report')}>
           <Download className="h-4 w-4 mr-1" /> Export
         </Button>
       </PageHeader>

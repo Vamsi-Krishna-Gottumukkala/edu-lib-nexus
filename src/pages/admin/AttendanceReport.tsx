@@ -32,8 +32,10 @@ export default function AttendanceReport() {
     branches: string[]; departments: string[];
   }>(null);
 
-  const { data: programs = [] } = useQuery({ queryKey: ["programs"], queryFn: getPrograms });
-  const { data: departments = [] } = useQuery({ queryKey: ["departments"], queryFn: getDepartments });
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
+  const { data: programs = [] } = useQuery({ queryKey: ["programs", branchId], queryFn: () => getPrograms(branchId) });
+  const { data: departments = [] } = useQuery({ queryKey: ["departments", branchId], queryFn: () => getDepartments(branchId) });
 
   const { data: reportData = [], isLoading } = useQuery({
     queryKey: ["attendance-report", fetchParams],

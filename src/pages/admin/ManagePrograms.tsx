@@ -9,12 +9,16 @@ import { getPrograms, addProgram, deleteProgram } from "@/lib/services/catalog";
 import { Plus, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { useAuth } from "@/contexts/AuthContext";
+
 export default function ManagePrograms() {
   const qc = useQueryClient();
   const [form, setForm] = useState({ degree: "", branch_name: "", branch_code: "" });
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  const { data: programs = [], isLoading } = useQuery({ queryKey: ["programs"], queryFn: getPrograms });
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
+  const { data: programs = [], isLoading } = useQuery({ queryKey: ["programs", branchId], queryFn: () => getPrograms(branchId) });
 
   const addMut = useMutation({
     mutationFn: () => addProgram({ degree: form.degree.trim(), branch_name: form.branch_name.trim(), branch_code: form.branch_code.trim() }),

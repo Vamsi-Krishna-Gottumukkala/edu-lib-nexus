@@ -28,7 +28,9 @@ export default function ManageStudents() {
   const [deleting, setDeleting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const { data: programs = [] } = useQuery({ queryKey: ["programs"], queryFn: getPrograms });
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
+  const { data: programs = [] } = useQuery({ queryKey: ["programs", branchId], queryFn: () => getPrograms(branchId) });
 
   // Add single student
   const addMut = useMutation({

@@ -23,7 +23,9 @@ export default function ManageFaculty() {
   const [deleting, setDeleting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const { data: departments = [] } = useQuery({ queryKey: ["departments"], queryFn: getDepartments });
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
+  const { data: departments = [] } = useQuery({ queryKey: ["departments", branchId], queryFn: () => getDepartments(branchId) });
 
   const addMut = useMutation({
     mutationFn: () => addFaculty({

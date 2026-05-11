@@ -2,12 +2,16 @@ import { supabase } from '../supabase'
 
 // ─── Programs ─────────────────────────────────────────────────
 
-export async function getPrograms() {
-  const { data, error } = await supabase
+export async function getPrograms(branchId?: number | null) {
+  let query = supabase
     .from('programs')
     .select('*')
     .order('degree')
     .order('branch_name')
+
+  if (branchId != null) query = query.or(`branch_id.eq.${branchId},branch_id.is.null`)
+
+  const { data, error } = await query
   if (error) throw error
   return data ?? []
 }
@@ -33,11 +37,15 @@ export async function deleteProgram(programId: number) {
 
 // ─── Departments ───────────────────────────────────────────────
 
-export async function getDepartments() {
-  const { data, error } = await supabase
+export async function getDepartments(branchId?: number | null) {
+  let query = supabase
     .from('departments')
     .select('*')
     .order('department_name')
+
+  if (branchId != null) query = query.or(`branch_id.eq.${branchId},branch_id.is.null`)
+
+  const { data, error } = await query
   if (error) throw error
   return data ?? []
 }

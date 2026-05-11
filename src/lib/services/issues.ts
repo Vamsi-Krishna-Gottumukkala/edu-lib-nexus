@@ -71,27 +71,32 @@ export async function returnBook(accessionNumber: string) {
   return { ...updated, overdueDays, fine }
 }
 
-export async function getIssuedBooks(userId?: string) {
+export async function getIssuedBooks(userId?: string, branchId?: number | null) {
   let query = supabase
     .from('book_issues')
-    .select('*, book_copies(title, author, accession_number), users(user_name)')
+    .select('*, book_copies!inner(title, author, accession_number), users!inner(user_name, branch_id)')
     .eq('is_returned', false)
     .order('issue_date', { ascending: false })
 
   if (userId) query = query.eq('user_id', userId)
+  if (branchId != null) query = query.eq('users.branch_id', branchId)
 
   const { data, error } = await query
   if (error) throw error
   return data
 }
 
-export async function getReturnedBooks(limit = 100) {
-  const { data, error } = await supabase
+export async function getReturnedBooks(limit = 100, branchId?: number | null) {
+  let query = supabase
     .from('book_issues')
-    .select('*, book_copies(title, author, accession_number), users(user_name)')
+    .select('*, book_copies!inner(title, author, accession_number), users!inner(user_name, branch_id)')
     .eq('is_returned', true)
     .order('return_date', { ascending: false })
     .limit(limit)
+
+  if (branchId != null) query = query.eq('users.branch_id', branchId)
+
+  const { data, error } = await query
   if (error) throw error
   return data
 }

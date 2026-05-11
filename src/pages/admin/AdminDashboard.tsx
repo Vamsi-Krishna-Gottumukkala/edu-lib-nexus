@@ -31,12 +31,12 @@ const AdminDashboard = () => {
     queryFn:  () => getTodayCount(branchId),
   });
   const { data: issuedBooks = [] } = useQuery({
-    queryKey: ["issued-books"],
-    queryFn:  () => getIssuedBooks(),
+    queryKey: ["issued-books", branchId],
+    queryFn:  () => getIssuedBooks(undefined, branchId),
   });
   const { data: returnedBooks = [] } = useQuery({
-    queryKey: ["returned-books"],
-    queryFn:  () => getReturnedBooks(10),
+    queryKey: ["returned-books", branchId],
+    queryFn:  () => getReturnedBooks(10, branchId),
   });
   const { data: papers = [] } = useQuery({
     queryKey: ["papers", branchId],

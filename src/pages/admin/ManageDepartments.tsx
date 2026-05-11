@@ -9,12 +9,16 @@ import { getDepartments, addDepartment, deleteDepartment } from "@/lib/services/
 import { Plus, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { useAuth } from "@/contexts/AuthContext";
+
 export default function ManageDepartments() {
   const qc = useQueryClient();
   const [deptName, setDeptName] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  const { data: departments = [], isLoading } = useQuery({ queryKey: ["departments"], queryFn: getDepartments });
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
+  const { data: departments = [], isLoading } = useQuery({ queryKey: ["departments", branchId], queryFn: () => getDepartments(branchId) });
 
   const addMut = useMutation({
     mutationFn: () => addDepartment(deptName),
