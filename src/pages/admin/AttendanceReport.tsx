@@ -46,6 +46,7 @@ export default function AttendanceReport() {
       endDate: fetchParams.endDate,
       branches: fetchParams.branches,
       departments: fetchParams.departments,
+      branchId,
     }) : Promise.resolve([]),
     enabled: !!fetchParams,
   });

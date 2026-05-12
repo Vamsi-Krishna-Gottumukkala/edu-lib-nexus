@@ -9,8 +9,11 @@ import { getBookByAccession, updateBook } from "@/lib/services/books";
 import { getBranches } from "@/lib/services/branches";
 import { toast } from "sonner";
 import { Loader2, CheckCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const TransferBook = () => {
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
   const queryClient = useQueryClient();
   const [accessionNo, setAccessionNo] = useState("");
   const [lookupAccession, setLookupAccession] = useState<string | null>(null);
@@ -19,8 +22,8 @@ const TransferBook = () => {
   const { data: branches = [] } = useQuery({ queryKey: ["branches"], queryFn: getBranches });
 
   const { data: foundBook, isFetching, error } = useQuery({
-    queryKey: ["book-transfer-lookup", lookupAccession],
-    queryFn: () => getBookByAccession(lookupAccession!),
+    queryKey: ["book-transfer-lookup", lookupAccession, branchId],
+    queryFn: () => getBookByAccession(lookupAccession!, branchId),
     enabled: !!lookupAccession,
     retry: false,
   });
@@ -30,7 +33,7 @@ const TransferBook = () => {
       updateBook(lookupAccession!, {
         branch_id: parseInt(toBranchId),
         status: "Transferred",
-      }),
+      }, branchId),
     onSuccess: () => {
       const branch = (branches as any[]).find(b => String(b.id) === toBranchId);
       toast.success(`Book transferred to ${branch?.name || "new branch"} successfully!`);

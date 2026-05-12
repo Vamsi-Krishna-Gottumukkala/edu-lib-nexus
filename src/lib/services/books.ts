@@ -4,7 +4,7 @@ import { supabase, BookCopy } from '../supabase'
 export async function bulkInsertBooks(rows: Array<Omit<BookCopy, 'created_at'>>) {
   const { error } = await supabase
     .from('book_copies')
-    .upsert(rows, { onConflict: 'accession_number' })
+    .upsert(rows, { onConflict: 'accession_number,branch_id' })
   if (error) throw error
   return rows.length
 }
@@ -34,12 +34,15 @@ export async function getBooks(filters?: {
   return data
 }
 
-export async function getBookByAccession(accessionNumber: string) {
-  const { data, error } = await supabase
+export async function getBookByAccession(accessionNumber: string, branchId?: number | null) {
+  let query = supabase
     .from('book_copies')
     .select('*, library_branches(name)')
     .eq('accession_number', accessionNumber)
-    .single()
+    
+  if (branchId != null) query = query.eq('branch_id', branchId)
+
+  const { data, error } = await query.single()
   if (error) throw error
   return data
 }
@@ -54,24 +57,28 @@ export async function addBook(book: Omit<BookCopy, 'created_at'>) {
   return data
 }
 
-export async function updateBookStatus(accessionNumber: string, status: BookCopy['status']) {
-  const { data, error } = await supabase
+export async function updateBookStatus(accessionNumber: string, status: BookCopy['status'], branchId?: number | null) {
+  let query = supabase
     .from('book_copies')
     .update({ status })
     .eq('accession_number', accessionNumber)
-    .select()
-    .single()
+
+  if (branchId != null) query = query.eq('branch_id', branchId)
+
+  const { data, error } = await query.select().single()
   if (error) throw error
   return data
 }
 
-export async function updateBook(accessionNumber: string, updates: Partial<BookCopy>) {
-  const { data, error } = await supabase
+export async function updateBook(accessionNumber: string, updates: Partial<BookCopy>, branchId?: number | null) {
+  let query = supabase
     .from('book_copies')
     .update(updates)
     .eq('accession_number', accessionNumber)
-    .select()
-    .single()
+
+  if (branchId != null) query = query.eq('branch_id', branchId)
+
+  const { data, error } = await query.select().single()
   if (error) throw error
   return data
 }

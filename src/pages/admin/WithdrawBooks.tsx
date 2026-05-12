@@ -9,29 +9,32 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBooks, getBookByAccession, updateBookStatus } from "@/lib/services/books";
 import { Loader2, CheckCircle } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
+import { useAuth } from "@/contexts/AuthContext";
 
 const WITHDRAW_REASONS = ["Damaged Beyond Repair", "Obsolete Content", "Lost Pages", "Water Damaged", "Duplicate Copy", "Outdated Edition"];
 
 const WithdrawBooks = () => {
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
   const queryClient = useQueryClient();
   const [accessionNo, setAccessionNo] = useState("");
   const [reason, setReason] = useState("");
   const [lookupAccession, setLookupAccession] = useState<string | null>(null);
 
   const { data: withdrawn = [], isLoading } = useQuery({
-    queryKey: ["books", "withdrawn"],
-    queryFn: () => getBooks({ status: "Withdrawn" }),
+    queryKey: ["books", "withdrawn", branchId],
+    queryFn: () => getBooks({ status: "Withdrawn", branch_id: branchId }),
   });
 
   const { data: foundBook, isFetching, error } = useQuery({
-    queryKey: ["book-withdraw-lookup", lookupAccession],
-    queryFn: () => getBookByAccession(lookupAccession!),
+    queryKey: ["book-withdraw-lookup", lookupAccession, branchId],
+    queryFn: () => getBookByAccession(lookupAccession!, branchId),
     enabled: !!lookupAccession,
     retry: false,
   });
 
   const withdrawMutation = useMutation({
-    mutationFn: () => updateBookStatus(lookupAccession!, "Withdrawn"),
+    mutationFn: () => updateBookStatus(lookupAccession!, "Withdrawn", branchId),
     onSuccess: () => {
       toast.success(`Book ${lookupAccession} withdrawn. Reason: ${reason}`);
       setAccessionNo(""); setReason(""); setLookupAccession(null);

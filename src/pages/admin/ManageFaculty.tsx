@@ -64,11 +64,11 @@ export default function ManageFaculty() {
   async function handleSearch() {
     if (!searchId.trim()) return;
     try {
-      const u = await getUserById(searchId.trim());
+      const u = await getUserById(searchId.trim(), branchId);
       if (u.user_type !== "faculty") { toast.error("User is not faculty"); return; }
       setFoundUser(u);
       setEditForm({ user_name: u.user_name, designation: u.designation ?? "", department_id: u.department_id ?? "" });
-    } catch { toast.error("Faculty not found"); }
+    } catch (e: any) { toast.error(e.message || "Faculty not found"); }
   }
 
   async function handleUpdate() {

@@ -25,13 +25,17 @@ export async function getUsers(filter?: {
   return data
 }
 
-export async function getUserById(userId: string) {
-  const { data, error } = await supabase
+export async function getUserById(userId: string, branchId?: number | null) {
+  let query = supabase
     .from('users')
     .select('*, programs(program_id, branch_name, degree, branch_code), departments(department_id, department_name)')
     .eq('user_id', userId)
-    .single()
+
+  if (branchId != null) query = query.eq('branch_id', branchId)
+
+  const { data, error } = await query.maybeSingle()
   if (error) throw error
+  if (!data) throw new Error('User not found in your campus.')
   return data
 }
 

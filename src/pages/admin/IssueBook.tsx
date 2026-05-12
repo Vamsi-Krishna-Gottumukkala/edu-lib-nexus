@@ -12,8 +12,11 @@ import { getBranches } from "@/lib/services/branches";
 import { getSettings } from "@/lib/services/settings";
 import { toast } from "sonner";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const IssueBook = () => {
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
   const queryClient = useQueryClient();
   const [studentId, setStudentId] = useState("");
   const [accessionNo, setAccessionNo] = useState("");
@@ -28,15 +31,15 @@ const IssueBook = () => {
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: getSettings });
 
   const { data: foundStudent, isFetching: studentLoading, error: studentError } = useQuery({
-    queryKey: ["student-lookup", lookupStudentId],
-    queryFn: () => getUserById(lookupStudentId!),
+    queryKey: ["student-lookup", lookupStudentId, branchId],
+    queryFn: () => getUserById(lookupStudentId!, branchId),
     enabled: !!lookupStudentId,
     retry: false,
   });
 
   const { data: foundBook, isFetching: bookLoading, error: bookError } = useQuery({
-    queryKey: ["book-lookup", lookupAccession],
-    queryFn: () => getBookByAccession(lookupAccession!),
+    queryKey: ["book-lookup", lookupAccession, branchId],
+    queryFn: () => getBookByAccession(lookupAccession!, branchId),
     enabled: !!lookupAccession,
     retry: false,
   });
@@ -47,7 +50,7 @@ const IssueBook = () => {
       const today = new Date();
       const due = new Date(dueDate);
       const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      return issueBook(foundStudent!.user_id, foundBook!.accession_number, diffDays);
+      return issueBook(foundStudent!.user_id, foundBook!.accession_number, branchId, diffDays);
     },
     onSuccess: () => {
       toast.success(`Book issued to ${foundStudent?.user_name} successfully!`);
@@ -99,7 +102,8 @@ const IssueBook = () => {
           </div>
           {studentError && (
             <div className="flex items-center gap-2 text-destructive text-sm">
-              <XCircle className="w-4 h-4" /> Student not found
+              <XCircle className="w-4 h-4" />
+              {(studentError as any)?.message || 'Student not found in your campus.'}
             </div>
           )}
           {foundStudent && (

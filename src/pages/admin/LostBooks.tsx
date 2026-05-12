@@ -8,8 +8,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBooks, getBookByAccession, updateBookStatus } from "@/lib/services/books";
 import { Loader2, CheckCircle, AlertTriangle } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
+import { useAuth } from "@/contexts/AuthContext";
 
 const LostBooks = () => {
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
   const queryClient = useQueryClient();
   const [accessionNo, setAccessionNo] = useState("");
   const [lookupAccession, setLookupAccession] = useState<string | null>(null);
@@ -20,14 +23,14 @@ const LostBooks = () => {
   });
 
   const { data: foundBook, isFetching, error } = useQuery({
-    queryKey: ["book-lost-lookup", lookupAccession],
-    queryFn: () => getBookByAccession(lookupAccession!),
+    queryKey: ["book-lost-lookup", lookupAccession, branchId],
+    queryFn: () => getBookByAccession(lookupAccession!, branchId),
     enabled: !!lookupAccession,
     retry: false,
   });
 
   const markLostMutation = useMutation({
-    mutationFn: () => updateBookStatus(lookupAccession!, "Lost"),
+    mutationFn: () => updateBookStatus(lookupAccession!, "Lost", branchId),
     onSuccess: () => {
       toast.success(`Book ${lookupAccession} marked as Lost`);
       setAccessionNo(""); setLookupAccession(null);

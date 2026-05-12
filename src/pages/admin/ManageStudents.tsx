@@ -75,15 +75,14 @@ export default function ManageStudents() {
     if (fileRef.current) fileRef.current.value = "";
   }
 
-  // Search + Edit
   async function handleSearch() {
     if (!searchId.trim()) return;
     try {
-      const u = await getUserById(searchId.trim());
+      const u = await getUserById(searchId.trim(), branchId);
       if (u.user_type !== "student") { toast.error("User is not a student"); return; }
       setFoundUser(u);
       setEditForm({ user_name: u.user_name, year: u.year ?? "", program_id: u.program_id ?? "" });
-    } catch { toast.error("Student not found"); }
+    } catch (e: any) { toast.error(e.message || "Student not found"); }
   }
 
   async function handleUpdate() {
