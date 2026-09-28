@@ -50,7 +50,7 @@ export default function Login() {
         {/* College Emblem */}
         <img src="/gvplogo.png" alt="GVP Logo" className="w-[45px] h-[45px] object-contain shrink-0" />
         <h1 className="text-[17px] md:text-[20px] font-bold text-slate-900 tracking-tight">
-          Gayatri Vidya Parishad College for Degree and P.G Courses (A)
+          Gayatri Vidya Parishad Institute of Higher Learning and Research
         </h1>
       </header>
 
