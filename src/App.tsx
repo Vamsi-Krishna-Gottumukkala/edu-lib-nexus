@@ -20,6 +20,7 @@ import UploadPaper from "@/pages/admin/UploadPaper";
 import InventoryOverview from "@/pages/admin/InventoryOverview";
 import AvailableBooks from "@/pages/admin/AvailableBooks";
 import AddBook from "@/pages/admin/AddBook";
+import DeleteBooks from "@/pages/admin/DeleteBooks";
 import IssueBook from "@/pages/admin/IssueBook";
 import ReturnBook from "@/pages/admin/ReturnBook";
 import TransferBook from "@/pages/admin/TransferBook";
@@ -92,6 +93,7 @@ const App = () => (
                 <Route path="/admin/inventory" element={<InventoryOverview />} />
                 <Route path="/admin/available-books" element={<AvailableBooks />} />
                 <Route path="/admin/add-book" element={<AddBook />} />
+                <Route path="/admin/delete-books" element={<DeleteBooks />} />
                 <Route path="/admin/issue-book" element={<IssueBook />} />
                 <Route path="/admin/return-book" element={<ReturnBook />} />
                 <Route path="/admin/transfer-book" element={<TransferBook />} />

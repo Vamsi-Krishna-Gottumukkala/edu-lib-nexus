@@ -24,9 +24,15 @@ export async function getBooks(filters?: {
   if (filters?.category) query = query.eq('category', filters.category)
   if (filters?.branch_id != null) query = query.eq('branch_id', filters.branch_id)
   if (filters?.search) {
-    query = query.or(
-      `title.ilike.%${filters.search}%,author.ilike.%${filters.search}%,accession_number.ilike.%${filters.search}%,isbn.ilike.%${filters.search}%`
-    )
+    if (/^\d+$/.test(filters.search)) {
+      query = query.or(
+        `title.ilike.%${filters.search}%,author.ilike.%${filters.search}%,accession_number.eq.${filters.search},isbn.ilike.%${filters.search}%`
+      )
+    } else {
+      query = query.or(
+        `title.ilike.%${filters.search}%,author.ilike.%${filters.search}%,accession_number.ilike.%${filters.search}%,isbn.ilike.%${filters.search}%`
+      )
+    }
   }
 
   const { data, error } = await query
@@ -136,9 +142,15 @@ export async function getBooksPaginated(params: {
   if (status) query = query.eq('status', status)
   if (branch_id != null) query = query.eq('branch_id', branch_id)
   if (search) {
-    query = query.or(
-      `title.ilike.%${search}%,author.ilike.%${search}%,accession_number.ilike.%${search}%,isbn.ilike.%${search}%`
-    )
+    if (/^\d+$/.test(search)) {
+      query = query.or(
+        `title.ilike.%${search}%,author.ilike.%${search}%,accession_number.eq.${search},isbn.ilike.%${search}%`
+      )
+    } else {
+      query = query.or(
+        `title.ilike.%${search}%,author.ilike.%${search}%,accession_number.ilike.%${search}%,isbn.ilike.%${search}%`
+      )
+    }
   }
 
   const { data, error, count } = await query
@@ -160,12 +172,63 @@ export async function searchBooks(query: string, branchId?: number | null) {
   let q = supabase
     .from('book_copies')
     .select('accession_number, title, author, isbn, status')
-    .or(`title.ilike.%${query}%,author.ilike.%${query}%,accession_number.ilike.%${query}%`)
-    .limit(10)
+
+  if (/^\d+$/.test(query)) {
+    q = q.or(`title.ilike.%${query}%,author.ilike.%${query}%,accession_number.eq.${query}`)
+  } else {
+    q = q.or(`title.ilike.%${query}%,author.ilike.%${query}%,accession_number.ilike.%${query}%`)
+  }
+
+  q = q.limit(10)
 
   if (branchId != null) q = q.eq('branch_id', branchId)
 
   const { data, error } = await q
   if (error) throw error
   return data
+}
+
+/**
+ * Returns every circulation record for the requested copies.
+ *
+ * A book copy must keep its borrowing history intact, so a copy is deletable
+ * only when it has never been issued. This also mirrors the database foreign
+ * key from book_issues to book_copies.
+ */
+export async function checkBookDependencies(accessionNumbers: string[], branchId?: number | null) {
+  if (accessionNumbers.length === 0) return []
+
+  let query = supabase
+    .from('book_issues')
+    .select('accession_number, user_id, issue_date, due_date, return_date, is_returned')
+    .in('accession_number', accessionNumbers)
+
+  if (branchId != null) query = query.eq('branch_id', branchId)
+
+  const { data, error } = await query
+  if (error) throw error
+  return data ?? []
+}
+
+/** Permanently delete copies that have no circulation records. */
+export async function deleteBooks(accessionNumbers: string[], branchId?: number | null) {
+  if (accessionNumbers.length === 0) return 0
+
+  // Check again at the data-service boundary. The UI checks first to show a
+  // helpful explanation, while this prevents a direct caller from bypassing it.
+  const dependencies = await checkBookDependencies(accessionNumbers, branchId)
+  if (dependencies.length > 0) {
+    throw new Error('Books with student or faculty borrowing records cannot be deleted.')
+  }
+
+  let query = supabase
+    .from('book_copies')
+    .delete()
+    .in('accession_number', accessionNumbers)
+
+  if (branchId != null) query = query.eq('branch_id', branchId)
+
+  const { data, error } = await query.select('accession_number')
+  if (error) throw error
+  return data?.length ?? 0
 }

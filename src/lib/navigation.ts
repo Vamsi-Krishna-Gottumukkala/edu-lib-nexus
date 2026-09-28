@@ -3,7 +3,7 @@ import {
   BarChart3, Settings, Users, Clock, History, Upload, TrendingUp,
   Download, Star, Search, BookCopy, ArrowLeftRight, AlertTriangle,
   XCircle, Building2, Plus, List, Eye, User, CalendarDays,
-  Wifi, UserPlus, RefreshCw,
+  Wifi, UserPlus, RefreshCw, Trash2,
   type LucideIcon
 } from "lucide-react";
 
@@ -49,6 +49,7 @@ export const adminNav: NavItem[] = [
         { title: "Inventory Overview", url: "/admin/inventory",        icon: Eye },
         { title: "Available Books",    url: "/admin/available-books",  icon: BookCopy },
         { title: "Add Book",           url: "/admin/add-book",         icon: Plus },
+        { title: "Delete Books",        url: "/admin/delete-books",     icon: Trash2 },
       ]},
       { title: "Circulation", icon: ArrowLeftRight, children: [
         { title: "Issue Book",    url: "/admin/issue-book",    icon: BookOpen },
