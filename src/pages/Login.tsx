@@ -46,12 +46,15 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-[#fafafa] flex flex-col font-sans">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center gap-4">
+      <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center gap-4">
         {/* College Emblem */}
-        <img src="/gvplogo.png" alt="GVP Logo" className="w-[45px] h-[45px] object-contain shrink-0" />
-        <h1 className="text-[17px] md:text-[20px] font-bold text-slate-900 tracking-tight">
-          Gayatri Vidya Parishad Institute of Higher Learning and Research
-        </h1>
+        <img src="/gvplogo.png" alt="GVP Logo" className="w-[64px] h-[64px] object-contain shrink-0" />
+        <div>
+          <h1 className="text-[17px] md:text-[20px] font-bold text-slate-900 tracking-tight">
+            Gayatri Vidya Parishad Institute of Higher Learning and Research
+          </h1>
+          <p className="text-[15px] font-light text-slate-500 md:text-[18px]">Deemed to be University</p>
+        </div>
       </header>
 
       {/* Main Content */}

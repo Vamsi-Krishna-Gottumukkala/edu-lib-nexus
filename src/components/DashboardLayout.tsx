@@ -60,8 +60,8 @@ export const DashboardLayout = () => {
       <AppSidebar items={navItems} collapsed={collapsed} />
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
-        <header className="h-14 bg-card border-b border-border flex items-center justify-between px-4 shrink-0">
-          <div className="flex items-center gap-3">
+        <header className="min-h-20 bg-card border-b border-border flex items-center justify-between px-4 shrink-0">
+          <div className="flex min-w-0 items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
@@ -70,8 +70,26 @@ export const DashboardLayout = () => {
             >
               <Menu className="h-4 w-4" />
             </Button>
+            <div className="flex min-w-0 items-center gap-3">
+              <img
+                src="/gvplogo.png"
+                alt="Gayatri Vidya Parishad Institute of Higher Learning and Research logo"
+                className="h-14 w-14 shrink-0 object-contain"
+              />
+              <div className="min-w-0">
+                <h1
+                  className="truncate text-sm font-bold leading-tight text-foreground md:text-base"
+                  title="Gayatri Vidya Parishad Institute of Higher Learning and Research"
+                >
+                  Gayatri Vidya Parishad Institute of Higher Learning and Research
+                </h1>
+                <p className="text-xs font-light text-muted-foreground md:text-sm">
+                  Deemed to be University
+                </p>
+              </div>
+            </div>
             {/* Nav Search */}
-            <div ref={searchRef} className="hidden sm:block relative">
+            <div ref={searchRef} className="relative hidden 2xl:block">
               <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1.5">
                 <Search className="h-3.5 w-3.5 text-muted-foreground" />
                 <input
