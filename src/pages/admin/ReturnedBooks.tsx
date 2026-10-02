@@ -35,7 +35,7 @@ const ReturnedBooks = () => {
             'Fine Amount': r.fine_amount || 0
           })), 'returned_books_report');
         }}>
-          <Download className="h-4 w-4 mr-1" /> Export
+          <Download className="h-4 w-4 mr-1" /> Download
         </Button>
       </PageHeader>
       {isLoading ? (

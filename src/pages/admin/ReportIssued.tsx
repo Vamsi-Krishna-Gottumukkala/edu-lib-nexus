@@ -35,7 +35,7 @@ const ReportIssued = () => {
             'Overdue': new Date(i.due_date) < new Date() ? 'Yes' : 'No'
           })), 'issued_books_report');
         }}>
-          <Download className="h-4 w-4 mr-1" /> Export
+          <Download className="h-4 w-4 mr-1" /> Download
         </Button>
       </PageHeader>
       {isLoading ? (
