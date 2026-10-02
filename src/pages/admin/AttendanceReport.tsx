@@ -186,7 +186,7 @@ export default function AttendanceReport() {
       {fetchParams && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center justify-between">
+            <CardTitle className="text-sm flex flex-wrap gap-2 items-center justify-between">
               <span>Results — {reportData.length} records</span>
               {reportData.length > 0 && (
                 <Button size="sm" variant="outline" className="gap-1.5" onClick={handleDownload}>

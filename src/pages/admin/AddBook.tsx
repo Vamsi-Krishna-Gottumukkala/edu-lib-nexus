@@ -206,7 +206,7 @@ const AddBook = () => {
           {/* ── Single Add ── */}
           <TabsContent value="single">
             <div className="bg-card rounded-xl p-5 border border-border/50 card-shadow space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="col-span-2 sm:col-span-1">
                   <Label>Accession Number *</Label>
                   <Input placeholder="e.g. GVP/LIB/2024/001" value={form.accession_number}

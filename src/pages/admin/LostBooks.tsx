@@ -44,7 +44,7 @@ const LostBooks = () => {
     <div className="animate-fade-in">
       <PageHeader title="Lost Books" description="Mark and track lost book copies" />
       <div className="max-w-2xl mb-6">
-        <div className="bg-card rounded-xl p-5 border border-border/50 card-shadow space-y-4">
+        <div className="bg-card rounded-xl p-3 sm:p-5 border border-border/50 card-shadow space-y-4">
           <h3 className="text-sm font-semibold text-card-foreground">Mark Book as Lost</h3>
           <div className="flex gap-3">
             <div className="flex-1">
@@ -86,7 +86,7 @@ const LostBooks = () => {
       {lostLoading ? (
         <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
       ) : lostBooks.length === 0 ? (
-        <div className="bg-card rounded-xl p-8 border border-border/50 text-center">
+        <div className="bg-card rounded-xl p-4 sm:p-8 border border-border/50 text-center">
           <p className="text-muted-foreground">No lost books on record.</p>
         </div>
       ) : (

@@ -64,7 +64,7 @@ export default function Login() {
         {/* Login Card */}
         <div className="w-full max-w-[420px] bg-white rounded-xl shadow-[0_2px_12px_-2px_rgba(0,0,0,0.06)] border border-slate-200 overflow-hidden mb-12">
           
-          <div className="p-8 pb-6">
+          <div className="p-4 sm:p-8 pb-4 sm:pb-6">
             <div className="text-center mb-6">
               <h3 className="text-lg font-bold text-slate-900">Welcome back</h3>
               <p className="text-[13px] text-slate-500 mt-1.5">
@@ -192,7 +192,7 @@ export default function Login() {
           </div>
 
           {/* Card Footer */}
-          <div className="border-t border-slate-100 py-4 px-8 bg-slate-50/50">
+          <div className="border-t border-slate-100 py-4 px-4 sm:px-8 bg-slate-50/50">
             <p className="text-[11px] text-slate-500 text-center">
               {tab === "admin" 
                 ? "Use your institutional domain email to sign in." 

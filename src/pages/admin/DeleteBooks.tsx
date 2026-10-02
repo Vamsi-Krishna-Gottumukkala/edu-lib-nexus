@@ -304,7 +304,7 @@ const DeleteBooks = () => {
           </div>
 
           {/* ── Select all toggle + Pagination ── */}
-          <div className="flex items-center justify-between text-sm text-muted-foreground pt-1">
+          <div className="flex flex-wrap gap-2 items-center justify-between text-sm text-muted-foreground pt-1">
             <div className="flex items-center gap-3">
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <Checkbox checked={allOnPageSelected} onCheckedChange={toggleSelectAll} />
@@ -349,7 +349,7 @@ const DeleteBooks = () => {
                   The following books are currently issued to a student or faculty member.
                   Return them before deleting the inventory copy.
                 </p>
-                <div className="max-h-48 overflow-y-auto rounded-md border border-border">
+                <div className="max-h-48 overflow-y-auto overflow-x-auto rounded-md border border-border">
                   <table className="w-full text-sm">
                     <thead className="bg-muted/50 sticky top-0">
                       <tr>

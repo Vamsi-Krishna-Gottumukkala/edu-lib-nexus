@@ -90,7 +90,7 @@ const WithdrawBooks = () => {
 
       <h3 className="text-base font-semibold mb-3">Withdrawn Books ({withdrawn.length})</h3>
       {withdrawn.length === 0 ? (
-        <div className="bg-card rounded-xl p-8 border border-border/50 text-center">
+        <div className="bg-card rounded-xl p-4 sm:p-8 border border-border/50 text-center">
           <p className="text-muted-foreground">No withdrawn books.</p>
         </div>
       ) : (

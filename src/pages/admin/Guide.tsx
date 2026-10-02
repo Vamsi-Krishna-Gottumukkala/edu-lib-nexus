@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { BookOpen, DoorOpen, FileText, Library, GitBranch, BarChart3, Settings, Users, ArrowLeftRight, AlertTriangle, XCircle, Search, Upload, Download, Clock, CalendarDays, BookCopy } from "lucide-react";
 
 const Section = ({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) => (
-  <div className="bg-card rounded-xl p-6 border border-border/50 card-shadow mb-4">
+  <div className="bg-card rounded-xl p-3 sm:p-6 border border-border/50 card-shadow mb-4">
     <div className="flex items-center gap-3 mb-4">
       <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
         <Icon className="h-5 w-5 text-primary" />
@@ -183,7 +183,7 @@ const Guide = () => (
       <p>Select "All Branches" to view combined data across all library branches.</p>
     </Section>
 
-    <div className="bg-primary/5 rounded-xl p-6 border border-primary/20 mt-6">
+    <div className="bg-primary/5 rounded-xl p-3 sm:p-6 border border-primary/20 mt-6">
       <h2 className="text-lg font-bold text-card-foreground mb-2">Need Help?</h2>
       <p className="text-sm text-muted-foreground">For technical support or feature requests, contact the system administrator at <strong>admin@edu.ac.in</strong>. For library-related queries, visit your nearest branch librarian.</p>
     </div>

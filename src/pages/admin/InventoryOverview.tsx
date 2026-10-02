@@ -93,7 +93,7 @@ const InventoryOverview = () => {
       <PageHeader title="Inventory Overview" description="Complete book inventory with accession tracking" />
 
       {/* ── Stats cards ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard title="Total Copies"  value={stats?.total     ?? "…"} icon={BookOpen}     color="primary" />
         <StatsCard title="Available"     value={stats?.available  ?? "…"} icon={BookCopy}     color="success" />
         <StatsCard title="Issued"        value={stats?.issued     ?? "…"} icon={BookOpen}     color="info"    />
@@ -169,7 +169,7 @@ const InventoryOverview = () => {
           </div>
 
           {/* ── Pagination controls ─────────────────────────────── */}
-          <div className="flex items-center justify-between text-sm text-muted-foreground pt-1">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground pt-1">
             <span>
               Showing <span className="font-medium text-foreground">{from}–{to}</span> of{" "}
               <span className="font-medium text-foreground">{totalCount.toLocaleString()}</span> entries

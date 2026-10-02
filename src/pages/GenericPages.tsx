@@ -175,7 +175,7 @@ export const DownloadAnalytics = () => {
   return (
     <div className="animate-fade-in">
       <PageHeader title="Download Analytics" description="Track question paper download metrics" />
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <StatsCard title="Total Downloads" value={totalDownloads} icon={Download} color="primary" />
         <StatsCard title="Papers Available" value={papers.length} icon={FileText} color="info" />
         <StatsCard title="Avg Downloads/Paper" value={avgDownloads} icon={TrendingUp} color="success" />
@@ -248,7 +248,7 @@ export const AddBranch = () => {
       <PageHeader title="Add Branch" description="Add a new library branch" />
       <div className="max-w-2xl">
         <div className="bg-card rounded-xl p-5 border border-border/50 card-shadow space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label>Branch Name *</Label>
               <Input placeholder="e.g. Central Library" value={form.name}
@@ -414,7 +414,7 @@ export const ReportGate = () => {
   return (
     <div className="animate-fade-in">
       <PageHeader title="Gate Register Report" description="Library gate entry/exit attendance report" />
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <StatsCard title="Today's Visitors" value={todayCount} icon={DoorOpen} color="primary" />
         <StatsCard title="Total Records" value={logs.length} icon={Users} color="info" />
         <StatsCard title="Currently In" value={logs.filter((l: any) => !l.logout_time && l.log_date === today).length} icon={Clock} color="success" />
@@ -506,7 +506,7 @@ export const UserManagement = () => {
     <div className="animate-fade-in">
       <PageHeader title="User Management" description="Registered students and faculty">
       </PageHeader>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <StatsCard title="Total Users" value={count} icon={Users} color="primary" />
         <StatsCard title="Students" value={users.filter((u: any) => u.user_type === "student").length} icon={User} color="success" />
         <StatsCard title="Faculty" value={users.filter((u: any) => u.user_type === "faculty").length} icon={Settings} color="info" />
@@ -557,7 +557,7 @@ export const SystemSettings = () => {
       <div className="max-w-2xl space-y-6">
         <div className="bg-card rounded-xl p-5 border border-border/50 card-shadow space-y-4">
           <h3 className="text-sm font-semibold text-card-foreground">Library Configuration</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label>Fine Per Day (₹)</Label>
               <Input type="number" value={form.fine_per_day || ""} onChange={e => upd("fine_per_day", e.target.value)} />
@@ -582,7 +582,7 @@ export const SystemSettings = () => {
         </div>
         <div className="bg-card rounded-xl p-5 border border-border/50 card-shadow space-y-4">
           <h3 className="text-sm font-semibold text-card-foreground">Institution Details</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="col-span-2">
               <Label>Institution Name</Label>
               <Input value={form.institution_name || ""} onChange={e => upd("institution_name", e.target.value)} />
@@ -756,7 +756,7 @@ export const BrowseBooks = () => {
     <div className="animate-fade-in">
       <PageHeader title="Browse Books" description="Search and browse the library catalog" />
       <div className="mb-6 rounded-lg border border-border bg-card p-4">
-        <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)_220px_auto]">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[220px_minmax(0,1fr)_220px_auto]">
           <div>
             <Label htmlFor="book-search-field">Search field</Label>
             <Select value={searchField} onValueChange={(value) => {
@@ -920,7 +920,7 @@ export const BranchAvailability = () => {
           <p className="text-muted-foreground">No branches configured yet.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {(branches as any[]).map((branch: any) => (
             <div key={branch.id} className="bg-card rounded-xl p-5 border border-border/50 card-shadow">
               <div className="flex items-center gap-3 mb-3">
@@ -993,7 +993,7 @@ export const BrowsePapers = () => {
             value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <Select value={dept} onValueChange={setDept}>
-          <SelectTrigger className="w-48"><SelectValue placeholder="Department" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Department" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Departments</SelectItem>
             {departments.map((d: any) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
@@ -1157,7 +1157,7 @@ export const AttendanceHistory = () => {
   return (
     <div className="animate-fade-in">
       <PageHeader title="Attendance History" description="Your complete library attendance record" />
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <StatsCard title="Total Visits" value={myLogs.length} icon={History} color="primary" />
         <StatsCard title="Total Hours" value={`${Math.floor(totalMinutes / 60)}h`} icon={Clock} color="info" />
         <StatsCard title="Avg Per Visit" value={`${Math.round(totalMinutes / Math.max(myLogs.length, 1))}m`} icon={TrendingUp} color="success" />
@@ -1214,7 +1214,7 @@ export const StudentProfile = () => {
               <p className="text-sm text-muted-foreground">{userId}</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-muted-foreground text-xs">Full Name</Label>
               <p className="text-sm font-medium">{userName}</p>

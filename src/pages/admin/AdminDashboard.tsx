@@ -96,7 +96,7 @@ const AdminDashboard = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-card rounded-xl p-5 border border-border/50 card-shadow">
+        <div className="bg-card rounded-xl p-5 border border-border/50 card-shadow min-w-0">
           <h3 className="text-sm font-semibold text-card-foreground mb-4">Daily Attendance (Last 7 Days)</h3>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={chartData}>
@@ -109,7 +109,7 @@ const AdminDashboard = () => {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-card rounded-xl p-5 border border-border/50 card-shadow">
+        <div className="bg-card rounded-xl p-5 border border-border/50 card-shadow min-w-0">
           <h3 className="text-sm font-semibold text-card-foreground mb-4">Book Inventory Status</h3>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
@@ -123,7 +123,7 @@ const AdminDashboard = () => {
                 ].filter(d => d.value > 0)}
                 cx="50%"
                 cy="50%"
-                outerRadius={90}
+                outerRadius={75}
                 dataKey="value"
                 label={({ name, value }) => `${name}: ${value}`}
               >

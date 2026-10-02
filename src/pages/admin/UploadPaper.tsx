@@ -73,12 +73,12 @@ const UploadPaper = () => {
       <PageHeader title="Upload Question Paper" description="Upload previous year question papers to Supabase Storage" />
       <div className="max-w-2xl">
         <div className="bg-card rounded-xl p-5 border border-border/50 card-shadow space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 sm:col-span-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="col-span-1">
               <Label>Subject Name *</Label>
               <Input placeholder="e.g. Data Structures" value={form.subject_name} onChange={e => upd("subject_name", e.target.value)} />
             </div>
-            <div className="col-span-2 sm:col-span-1">
+            <div className="col-span-1">
               <Label>Subject Code *</Label>
               <Input placeholder="e.g. CS301" value={form.subject_code} onChange={e => upd("subject_code", e.target.value)} />
             </div>
@@ -128,7 +128,7 @@ const UploadPaper = () => {
             ) : (
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/40 transition-colors"
+                className="w-full border-2 border-dashed border-border rounded-lg p-4 sm:p-8 text-center hover:border-primary/40 transition-colors"
               >
                 <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                 <p className="text-sm text-muted-foreground">Click to select a PDF file</p>

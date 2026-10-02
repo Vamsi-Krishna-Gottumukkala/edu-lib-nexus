@@ -7,9 +7,12 @@ import { adminNav, studentNav } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { getAnnouncements } from "@/lib/services/announcements";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const DashboardLayout = () => {
+  const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
   const { role, isSuperAdmin } = useAuth();
@@ -55,41 +58,73 @@ export const DashboardLayout = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Close mobile sidebar on navigation
+  useEffect(() => {
+    if (isMobile) setMobileOpen(false);
+  }, [navigate, isMobile]);
+
+  // Toggle handler — on mobile, toggle overlay; on desktop, toggle collapsed
+  const handleMenuToggle = () => {
+    if (isMobile) {
+      setMobileOpen(!mobileOpen);
+    } else {
+      setCollapsed(!collapsed);
+    }
+  };
+
   return (
     <div className="flex h-screen w-full overflow-hidden">
-      <AppSidebar items={navItems} collapsed={collapsed} />
+      {/* Mobile backdrop overlay */}
+      {isMobile && mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 transition-opacity"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar — hidden on mobile unless mobileOpen */}
+      <div
+        className={
+          isMobile
+            ? `fixed inset-y-0 left-0 z-50 transition-transform duration-300 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`
+            : "relative"
+        }
+      >
+        <AppSidebar items={navItems} collapsed={isMobile ? false : collapsed} />
+      </div>
+
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
-        <header className="min-h-24 bg-card border-b border-border flex items-center justify-between gap-4 px-4 shrink-0">
-          <div className="flex min-w-0 items-center gap-3">
+        <header className="min-h-16 md:min-h-24 bg-card border-b border-border flex items-center justify-between gap-2 sm:gap-4 px-2 sm:px-4 shrink-0">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setCollapsed(!collapsed)}
+              onClick={handleMenuToggle}
               className="h-8 w-8"
             >
               <Menu className="h-4 w-4" />
             </Button>
-            <div className="flex min-w-0 items-center gap-3">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <img
                 src="/gvplogo.png"
                 alt="Gayatri Vidya Parishad Institute of Higher Learning and Research logo"
-                className="h-[73px] w-[73px] shrink-0 object-contain"
+                className="h-10 w-10 sm:h-[58px] sm:w-[58px] md:h-[73px] md:w-[73px] shrink-0 object-contain"
               />
               <div className="min-w-0">
                 <h1
-                  className="truncate text-[18px] font-bold leading-tight text-foreground md:text-[21px]"
+                  className="truncate text-sm sm:text-[18px] font-bold leading-tight text-foreground md:text-[21px]"
                   title="Gayatri Vidya Parishad Institute of Higher Learning and Research"
                 >
                   Gayatri Vidya Parishad Institute of Higher Learning and Research
                 </h1>
-                <p className="text-[10px] font-light leading-tight text-muted-foreground md:text-xs">
+                <p className="text-[9px] sm:text-[10px] font-light leading-tight text-muted-foreground md:text-xs hidden sm:block">
                   (Deemed to be University under Distinct Category under Section 3 of the UGC Act, 1956)
                 </p>
               </div>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             {/* Nav Search */}
             <div ref={searchRef} className="relative hidden xl:block">
               <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1.5">
@@ -151,7 +186,7 @@ export const DashboardLayout = () => {
         )}
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto p-6 bg-background">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 bg-background">
           <Outlet />
         </main>
       </div>

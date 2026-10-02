@@ -23,7 +23,7 @@ export const StatsCard = ({ title, value, icon: Icon, trend, trendUp, color = "p
   return (
     <div className="bg-card rounded-xl p-5 card-shadow hover:card-shadow-hover transition-shadow border border-border/50">
       <div className="flex items-start justify-between">
-        <div>
+        <div className="min-w-0">
           <p className="text-sm text-muted-foreground font-medium">{title}</p>
           <p className="text-2xl font-bold text-card-foreground mt-1">{value}</p>
           {trend && (

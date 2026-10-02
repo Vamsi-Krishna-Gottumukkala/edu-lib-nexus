@@ -80,7 +80,7 @@ const IssueBook = () => {
       <div className="max-w-2xl space-y-6">
 
         {/* Student Lookup */}
-        <div className="bg-card rounded-xl p-5 border border-border/50 card-shadow space-y-4">
+        <div className="bg-card rounded-xl p-3 sm:p-5 border border-border/50 card-shadow space-y-4">
           <h3 className="text-sm font-semibold text-card-foreground">Step 1: Student Lookup</h3>
           <div className="flex gap-3">
             <div className="flex-1">
@@ -122,7 +122,7 @@ const IssueBook = () => {
         </div>
 
         {/* Book Lookup */}
-        <div className="bg-card rounded-xl p-5 border border-border/50 card-shadow space-y-4">
+        <div className="bg-card rounded-xl p-3 sm:p-5 border border-border/50 card-shadow space-y-4">
           <h3 className="text-sm font-semibold text-card-foreground">Step 2: Book Lookup</h3>
           <div className="flex gap-3">
             <div className="flex-1">
@@ -162,9 +162,9 @@ const IssueBook = () => {
         </div>
 
         {/* Dates */}
-        <div className="bg-card rounded-xl p-5 border border-border/50 card-shadow space-y-4">
+        <div className="bg-card rounded-xl p-3 sm:p-5 border border-border/50 card-shadow space-y-4">
           <h3 className="text-sm font-semibold text-card-foreground">Step 3: Set Due Date</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label>Issue Date</Label>
               <Input type="date" value={today} disabled />

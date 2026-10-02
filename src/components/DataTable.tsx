@@ -18,6 +18,7 @@ interface DataTableProps<T> {
 export function DataTable<T extends Record<string, any>>({ columns, data, emptyMessage = "No data found" }: DataTableProps<T>) {
   return (
     <div className="bg-card rounded-xl border border-border/50 card-shadow overflow-hidden">
+      <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50 hover:bg-muted/50">
@@ -48,6 +49,7 @@ export function DataTable<T extends Record<string, any>>({ columns, data, emptyM
           )}
         </TableBody>
       </Table>
+      </div>
     </div>
   );
 }
