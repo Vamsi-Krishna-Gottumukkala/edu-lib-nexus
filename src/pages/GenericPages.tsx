@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   History, Clock, Users, Download, Star, TrendingUp, Plus, Settings,
   Building2, BookOpen, AlertTriangle, XCircle, DoorOpen, FileText, Search,
-  CalendarDays, User, Mail, BookCopy, Eye, Loader2, Trash2
+  CalendarDays, User, Mail, BookCopy, Eye, Loader2, Trash2, ExternalLink
 } from "lucide-react";
 import { toast } from "sonner";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
@@ -22,6 +22,7 @@ import { fmtDate, exportToCSV } from "@/lib/utils";
 // Services
 import { getAttendanceLogs, getStudentAttendanceLogs, getAttendanceStats } from "@/lib/services/attendance";
 import { getBooks } from "@/lib/services/books";
+import { getEbooks, isValidEbookUrl } from "@/lib/services/ebooks";
 import { getIssuedBooks } from "@/lib/services/issues";
 import { getPapers, deletePaper, incrementDownload } from "@/lib/services/papers";
 import { getBranches, addBranch, getBranchStats } from "@/lib/services/branches";
@@ -330,7 +331,7 @@ export const ReportLost = () => {
             'Status': 'Lost'
           })), 'lost_books_report');
         }}>
-          <Download className="h-4 w-4 mr-1" /> Export
+          <Download className="h-4 w-4 mr-1" /> Download
         </Button>
       </PageHeader>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -378,7 +379,7 @@ export const ReportWithdrawn = () => {
             'Status': 'Withdrawn'
           })), 'withdrawn_books_report');
         }}>
-          <Download className="h-4 w-4 mr-1" /> Export
+          <Download className="h-4 w-4 mr-1" /> Download
         </Button>
       </PageHeader>
       {isLoading ? (
@@ -715,25 +716,103 @@ export const StudentDueBooks = () => {
 
 /* ── Student: Browse Books ── */
 export const BrowseBooks = () => {
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  const [searchField, setSearchField] = useState<"" | "accession_number" | "call_no" | "title" | "author" | "publisher" | "isbn">("");
+  const [branchId, setBranchId] = useState("all");
+  const [searchError, setSearchError] = useState("");
+
+  const { data: branches = [], isLoading: branchesLoading } = useQuery({
+    queryKey: ["library-branches"],
+    queryFn: getBranches,
+  });
 
   const { data: books = [], isLoading } = useQuery({
-    queryKey: ["books", "available", search],
+    queryKey: ["books", "available", search, searchField, branchId],
     queryFn: () => getBooks({
       status: "Available",
       search: search || undefined,
+      searchField: searchField || undefined,
+      branch_id: branchId === "all" ? undefined : Number(branchId),
     }),
   });
+
+  function runSearch() {
+    const value = searchInput.trim();
+    if (!value) {
+      setSearch("");
+      setSearchError("");
+      return;
+    }
+    if (!searchField) {
+      setSearchError("Select a field before searching.");
+      return;
+    }
+    setSearchError("");
+    setSearch(value);
+  }
 
   return (
     <div className="animate-fade-in">
       <PageHeader title="Browse Books" description="Search and browse the library catalog" />
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search by title, author, accession no., or ISBN..." className="pl-9"
-            value={search} onChange={e => setSearch(e.target.value)} />
+      <div className="mb-6 rounded-lg border border-border bg-card p-4">
+        <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)_220px_auto]">
+          <div>
+            <Label htmlFor="book-search-field">Search field</Label>
+            <Select value={searchField} onValueChange={(value) => {
+              setSearchField(value as typeof searchField);
+              setSearchError("");
+            }}>
+              <SelectTrigger id="book-search-field" className="mt-1">
+                <SelectValue placeholder="Select field" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="accession_number">Accession Number</SelectItem>
+                <SelectItem value="call_no">Call Number</SelectItem>
+                <SelectItem value="title">Title</SelectItem>
+                <SelectItem value="author">Author</SelectItem>
+                <SelectItem value="publisher">Publisher</SelectItem>
+                <SelectItem value="isbn">ISBN</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="book-search">Search value</Label>
+            <div className="relative mt-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="book-search"
+                placeholder={searchField ? "Enter search value" : "Choose a field first"}
+                className="pl-9"
+                value={searchInput}
+                onChange={e => {
+                  setSearchInput(e.target.value);
+                  if (e.target.value.trim() && !searchField) setSearchError("Select a field before searching.");
+                }}
+                onKeyDown={e => e.key === "Enter" && runSearch()}
+              />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="book-branch">Branch</Label>
+            <Select value={branchId} onValueChange={setBranchId} disabled={branchesLoading}>
+              <SelectTrigger id="book-branch" className="mt-1">
+                <SelectValue placeholder={branchesLoading ? "Loading branches…" : "All branches"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All branches</SelectItem>
+                {(branches as any[]).map(branch => (
+                  <SelectItem key={branch.id} value={String(branch.id)}>{branch.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button className="self-end" onClick={runSearch}>Search</Button>
         </div>
+        {searchError && <p className="mt-2 text-sm text-destructive">{searchError}</p>}
+        {!searchField && !searchError && (
+          <p className="mt-2 text-xs text-muted-foreground">Choose a search field before entering a search value.</p>
+        )}
       </div>
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>
@@ -751,6 +830,72 @@ export const BrowseBooks = () => {
           ]}
           data={books}
           emptyMessage="No books found"
+        />
+      )}
+    </div>
+  );
+};
+
+/* ── Student: Browse E-Books ── */
+export const BrowseEbooks = () => {
+  const [subject, setSubject] = useState("");
+  const [bookName, setBookName] = useState("");
+  const [appliedFilters, setAppliedFilters] = useState({ subject: "", bookName: "" });
+
+  const { data: ebooks = [], isLoading } = useQuery({
+    queryKey: ["ebooks", appliedFilters.subject, appliedFilters.bookName],
+    queryFn: () => getEbooks({
+      subject: appliedFilters.subject || undefined,
+      bookName: appliedFilters.bookName || undefined,
+    }),
+  });
+
+  function search() {
+    setAppliedFilters({ subject: subject.trim(), bookName: bookName.trim() });
+  }
+
+  function clearSearch() {
+    setSubject("");
+    setBookName("");
+    setAppliedFilters({ subject: "", bookName: "" });
+  }
+
+  return (
+    <div className="animate-fade-in">
+      <PageHeader title="E-Books" description="Search e-books by subject or book name" />
+      <div className="mb-6 rounded-lg border border-border bg-card p-4">
+        <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto] md:items-end">
+          <div>
+            <Label htmlFor="ebook-search-subject">Subject</Label>
+            <Input id="ebook-search-subject" className="mt-1" placeholder="Search by subject" value={subject} onChange={e => setSubject(e.target.value)} onKeyDown={e => e.key === "Enter" && search()} />
+          </div>
+          <div>
+            <Label htmlFor="ebook-search-name">Book name</Label>
+            <Input id="ebook-search-name" className="mt-1" placeholder="Search by book name" value={bookName} onChange={e => setBookName(e.target.value)} onKeyDown={e => e.key === "Enter" && search()} />
+          </div>
+          <Button onClick={search}>Search</Button>
+          {(appliedFilters.subject || appliedFilters.bookName) && <Button variant="ghost" onClick={clearSearch}>Clear</Button>}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
+      ) : (
+        <DataTable
+          columns={[
+            { header: "Subject", accessor: "subject_name" },
+            { header: "Book name", accessor: "book_name" },
+            {
+              header: "Action",
+              accessor: (row: any) => isValidEbookUrl(row.url) ? (
+                <a href={row.url} rel="noreferrer">
+                  <Button size="sm" className="gap-1.5"><ExternalLink className="h-3.5 w-3.5" />Open</Button>
+                </a>
+              ) : <span className="text-sm text-destructive">Link unavailable</span>,
+            },
+          ]}
+          data={ebooks}
+          emptyMessage="No e-books found"
         />
       )}
     </div>

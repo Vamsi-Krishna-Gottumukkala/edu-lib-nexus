@@ -21,6 +21,7 @@ import InventoryOverview from "@/pages/admin/InventoryOverview";
 import AvailableBooks from "@/pages/admin/AvailableBooks";
 import AddBook from "@/pages/admin/AddBook";
 import DeleteBooks from "@/pages/admin/DeleteBooks";
+import ManageEbooks from "@/pages/admin/ManageEbooks";
 import IssueBook from "@/pages/admin/IssueBook";
 import ReturnBook from "@/pages/admin/ReturnBook";
 import TransferBook from "@/pages/admin/TransferBook";
@@ -46,7 +47,7 @@ import {
   VisitHistory, ManagePapers, DownloadAnalytics, SubjectPopularity,
   AddBranch, ManageBranches, ReportLost, ReportWithdrawn, ReportGate,
   ReportVisits, UserManagement, SystemSettings,
-  StudentIssuedBooks, StudentDueBooks, BrowseBooks, BranchAvailability,
+  StudentIssuedBooks, StudentDueBooks, BrowseBooks, BrowseEbooks, BranchAvailability,
   BrowsePapers, DownloadPapers, MyVisits, AttendanceHistory, StudentProfile,
 } from "@/pages/GenericPages";
 
@@ -94,6 +95,7 @@ const App = () => (
                 <Route path="/admin/available-books" element={<AvailableBooks />} />
                 <Route path="/admin/add-book" element={<AddBook />} />
                 <Route path="/admin/delete-books" element={<DeleteBooks />} />
+                <Route path="/admin/ebooks" element={<ManageEbooks />} />
                 <Route path="/admin/issue-book" element={<IssueBook />} />
                 <Route path="/admin/return-book" element={<ReturnBook />} />
                 <Route path="/admin/transfer-book" element={<TransferBook />} />
@@ -132,6 +134,7 @@ const App = () => (
                 <Route path="/student/issued-books" element={<StudentIssuedBooks />} />
                 <Route path="/student/due-books" element={<StudentDueBooks />} />
                 <Route path="/student/browse-books" element={<BrowseBooks />} />
+                <Route path="/student/ebooks" element={<BrowseEbooks />} />
                 <Route path="/student/branch-availability" element={<BranchAvailability />} />
                 <Route path="/student/browse-papers" element={<BrowsePapers />} />
                 <Route path="/student/download-papers" element={<DownloadPapers />} />

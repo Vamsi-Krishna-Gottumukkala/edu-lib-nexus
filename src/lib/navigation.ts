@@ -63,6 +63,7 @@ export const adminNav: NavItem[] = [
       ]},
     ],
   },
+  { title: "E-Books", url: "/admin/ebooks", icon: BookOpen },
   {
     title: "Branches", icon: GitBranch, children: [
       { title: "Branch Control", icon: Building2, children: [
@@ -120,6 +121,7 @@ export const studentNav: NavItem[] = [
       { title: "Branch Availability",url: "/student/branch-availability", icon: Building2 },
     ],
   },
+  { title: "E-Books", url: "/student/ebooks", icon: BookOpen },
   {
     title: "Question Bank", icon: FileText, children: [
       { title: "Browse Papers",   url: "/student/browse-papers",   icon: Search },

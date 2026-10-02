@@ -78,6 +78,9 @@ export interface BookCopy {
 export interface BookIssue {
   id: number
   accession_number: string
+  book_title: string | null
+  book_author: string | null
+  book_isbn: string | null
   user_id: string
   issue_date: string
   due_date: string
@@ -100,6 +103,14 @@ export interface QuestionPaper {
   file_url: string | null
   downloads: number
   upload_date: string
+  created_at: string
+}
+
+export interface Ebook {
+  id: number
+  subject_name: string
+  book_name: string
+  url: string
   created_at: string
 }
 

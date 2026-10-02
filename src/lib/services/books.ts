@@ -1,5 +1,13 @@
 import { supabase, BookCopy } from '../supabase'
 
+export type BookSearchField =
+  | 'accession_number'
+  | 'call_no'
+  | 'title'
+  | 'author'
+  | 'publisher'
+  | 'isbn'
+
 /** Bulk insert books from an Excel upload */
 export async function bulkInsertBooks(rows: Array<Omit<BookCopy, 'created_at'>>) {
   const { error } = await supabase
@@ -14,6 +22,7 @@ export async function getBooks(filters?: {
   category?: string
   branch_id?: number | null
   search?: string
+  searchField?: BookSearchField
 }) {
   let query = supabase
     .from('book_copies')
@@ -23,7 +32,13 @@ export async function getBooks(filters?: {
   if (filters?.status) query = query.eq('status', filters.status)
   if (filters?.category) query = query.eq('category', filters.category)
   if (filters?.branch_id != null) query = query.eq('branch_id', filters.branch_id)
-  if (filters?.search) {
+  if (filters?.search && filters.searchField) {
+    if (filters.searchField === 'accession_number') {
+      query = query.eq('accession_number', filters.search)
+    } else {
+      query = query.ilike(filters.searchField, `%${filters.search}%`)
+    }
+  } else if (filters?.search) {
     if (/^\d+$/.test(filters.search)) {
       query = query.or(
         `title.ilike.%${filters.search}%,author.ilike.%${filters.search}%,accession_number.eq.${filters.search},isbn.ilike.%${filters.search}%`
@@ -128,8 +143,9 @@ export async function getBooksPaginated(params: {
   status?: string
   branch_id?: number | null
   search?: string
+  searchField?: BookSearchField
 }) {
-  const { page, pageSize = 100, status, branch_id, search } = params
+  const { page, pageSize = 100, status, branch_id, search, searchField } = params
   const from = page * pageSize
   const to   = from + pageSize - 1
 
@@ -141,7 +157,13 @@ export async function getBooksPaginated(params: {
 
   if (status) query = query.eq('status', status)
   if (branch_id != null) query = query.eq('branch_id', branch_id)
-  if (search) {
+  if (search && searchField) {
+    if (searchField === 'accession_number') {
+      query = query.eq('accession_number', search)
+    } else {
+      query = query.ilike(searchField, `%${search}%`)
+    }
+  } else if (search) {
     if (/^\d+$/.test(search)) {
       query = query.or(
         `title.ilike.%${search}%,author.ilike.%${search}%,accession_number.eq.${search},isbn.ilike.%${search}%`
@@ -189,11 +211,10 @@ export async function searchBooks(query: string, branchId?: number | null) {
 }
 
 /**
- * Returns every circulation record for the requested copies.
+ * Returns active circulation records for the requested copies.
  *
- * A book copy must keep its borrowing history intact, so a copy is deletable
- * only when it has never been issued. This also mirrors the database foreign
- * key from book_issues to book_copies.
+ * Returned loans are retained as independent history snapshots and do not
+ * prevent a copy being deleted. A currently issued copy cannot be deleted.
  */
 export async function checkBookDependencies(accessionNumbers: string[], branchId?: number | null) {
   if (accessionNumbers.length === 0) return []
@@ -202,6 +223,7 @@ export async function checkBookDependencies(accessionNumbers: string[], branchId
     .from('book_issues')
     .select('accession_number, user_id, issue_date, due_date, return_date, is_returned')
     .in('accession_number', accessionNumbers)
+    .eq('is_returned', false)
 
   if (branchId != null) query = query.eq('branch_id', branchId)
 
@@ -210,7 +232,7 @@ export async function checkBookDependencies(accessionNumbers: string[], branchId
   return data ?? []
 }
 
-/** Permanently delete copies that have no circulation records. */
+/** Permanently delete copies that are not currently issued. */
 export async function deleteBooks(accessionNumbers: string[], branchId?: number | null) {
   if (accessionNumbers.length === 0) return 0
 
@@ -218,7 +240,7 @@ export async function deleteBooks(accessionNumbers: string[], branchId?: number 
   // helpful explanation, while this prevents a direct caller from bypassing it.
   const dependencies = await checkBookDependencies(accessionNumbers, branchId)
   if (dependencies.length > 0) {
-    throw new Error('Books with student or faculty borrowing records cannot be deleted.')
+    throw new Error('Books currently issued to a student or faculty member cannot be deleted.')
   }
 
   let query = supabase

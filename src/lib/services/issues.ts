@@ -7,9 +7,28 @@ export async function issueBook(userId: string, accessionNumber: string, branchI
   dueDate.setDate(dueDate.getDate() + dueDays)
   const dueDateStr = dueDate.toISOString().split('T')[0]
 
+  // Copy book details into the issue row. Historical issue records can then
+  // remain readable even after a returned book copy is deleted from inventory.
+  let bookQuery = supabase
+    .from('book_copies')
+    .select('title, author, isbn')
+    .eq('accession_number', accessionNumber)
+  if (branchId != null) bookQuery = bookQuery.eq('branch_id', branchId)
+
+  const { data: book, error: bookLookupErr } = await bookQuery.single()
+  if (bookLookupErr || !book) throw bookLookupErr || new Error('Book not found.')
+
   const { data: issue, error: issueErr } = await supabase
     .from('book_issues')
-    .insert({ accession_number: accessionNumber, branch_id: branchId, user_id: userId, due_date: dueDateStr })
+    .insert({
+      accession_number: accessionNumber,
+      branch_id: branchId,
+      user_id: userId,
+      due_date: dueDateStr,
+      book_title: book.title,
+      book_author: book.author,
+      book_isbn: book.isbn,
+    })
     .select()
     .single()
   if (issueErr) throw issueErr
@@ -84,7 +103,10 @@ export async function getIssuedBooks(userId?: string, branchId?: number | null) 
 
   return issues.map(i => ({
     ...i,
-    book_copies: bookMap[i.accession_number] || null,
+    book_copies: bookMap[i.accession_number] || {
+      title: i.book_title || i.accession_number,
+      author: i.book_author || null,
+    },
     users: userMap[i.user_id] || null,
   }))
 }
@@ -116,7 +138,10 @@ export async function getReturnedBooks(limit = 100, branchId?: number | null) {
 
   return issues.map(i => ({
     ...i,
-    book_copies: bookMap[i.accession_number] || null,
+    book_copies: bookMap[i.accession_number] || {
+      title: i.book_title || i.accession_number,
+      author: i.book_author || null,
+    },
     users: userMap[i.user_id] || null,
   }))
 }
