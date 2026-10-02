@@ -6,8 +6,11 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { StatsCard } from "@/components/StatsCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BookOpen, BookCopy, AlertTriangle, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { getBooksPaginated, getInventoryStats } from "@/lib/services/books";
+import { getBranches } from "@/lib/services/branches";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
@@ -20,17 +23,34 @@ const InventoryOverview = () => {
   const [page, setPage]     = useState(0);
   const [search, setSearch] = useState("");
   const [inputVal, setInputVal] = useState("");
+  const [searchField, setSearchField] = useState<"" | "accession_number" | "call_no" | "title" | "author" | "publisher" | "isbn">("");
+  const [selectedBranch, setSelectedBranch] = useState("all");
+  const [searchError, setSearchError] = useState("");
+  const effectiveBranchId = isSuperAdmin
+    ? (selectedBranch === "all" ? null : Number(selectedBranch))
+    : branchId;
+
+  const { data: branches = [], isLoading: branchesLoading } = useQuery({
+    queryKey: ["library-branches"],
+    queryFn: getBranches,
+  });
 
   // ── Stats (exact server-side COUNT) ──────────────────────────
   const { data: stats } = useQuery({
-    queryKey: ["inventory-stats", branchId],
-    queryFn:  () => getInventoryStats(branchId),
+    queryKey: ["inventory-stats", effectiveBranchId],
+    queryFn:  () => getInventoryStats(effectiveBranchId),
   });
 
   // ── Paginated books ───────────────────────────────────────────
   const { data: pageResult, isLoading, isFetching } = useQuery({
-    queryKey: ["books-paged", branchId, page, search],
-    queryFn:  () => getBooksPaginated({ page, pageSize: PAGE_SIZE, branch_id: branchId, search: search || undefined }),
+    queryKey: ["books-paged", effectiveBranchId, page, search, searchField],
+    queryFn:  () => getBooksPaginated({
+      page,
+      pageSize: PAGE_SIZE,
+      branch_id: effectiveBranchId,
+      search: search || undefined,
+      searchField: searchField || undefined,
+    }),
     placeholderData: (prev) => prev,   // keep previous page visible while fetching
   });
 
@@ -41,8 +61,20 @@ const InventoryOverview = () => {
   const to         = Math.min(page * PAGE_SIZE + PAGE_SIZE, totalCount);
 
   function handleSearch() {
+    const value = inputVal.trim();
+    if (!value) {
+      setSearch("");
+      setSearchError("");
+      setPage(0);
+      return;
+    }
+    if (!searchField) {
+      setSearchError("Select a field before searching.");
+      return;
+    }
+    setSearchError("");
     setPage(0);
-    setSearch(inputVal.trim());
+    setSearch(value);
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -52,6 +84,7 @@ const InventoryOverview = () => {
   function clearSearch() {
     setInputVal("");
     setSearch("");
+    setSearchError("");
     setPage(0);
   }
 
@@ -67,22 +100,42 @@ const InventoryOverview = () => {
         <StatsCard title="Lost"          value={stats?.lost       ?? "…"} icon={AlertTriangle} color="destructive" />
       </div>
 
-      {/* ── Search bar ──────────────────────────────────────────── */}
-      <div className="flex gap-2">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by title, author, accession no…"
-            className="pl-9"
-            value={inputVal}
-            onChange={e => setInputVal(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
+      {/* ── Field-specific search ───────────────────────────────── */}
+      <div className="rounded-lg border border-border bg-card p-4">
+        <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)_220px_auto_auto]">
+          <div>
+            <Label htmlFor="inventory-search-field">Search field</Label>
+            <Select value={searchField} onValueChange={(value) => { setSearchField(value as typeof searchField); setSearchError(""); }}>
+              <SelectTrigger id="inventory-search-field" className="mt-1"><SelectValue placeholder="Select field" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="accession_number">Accession Number</SelectItem><SelectItem value="call_no">Call Number</SelectItem>
+                <SelectItem value="title">Title</SelectItem><SelectItem value="author">Author</SelectItem>
+                <SelectItem value="publisher">Publisher</SelectItem><SelectItem value="isbn">ISBN</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="inventory-search">Search value</Label>
+            <div className="relative mt-1"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input id="inventory-search" placeholder={searchField ? "Enter search value" : "Choose a field first"} className="pl-9" value={inputVal}
+                onChange={e => { setInputVal(e.target.value); if (e.target.value.trim() && !searchField) setSearchError("Select a field before searching."); }} onKeyDown={handleKeyDown} />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="inventory-branch">Branch</Label>
+            <Select value={isSuperAdmin ? selectedBranch : (branchId == null ? "all" : String(branchId))} onValueChange={setSelectedBranch} disabled={branchesLoading || !isSuperAdmin}>
+              <SelectTrigger id="inventory-branch" className="mt-1"><SelectValue placeholder="All branches" /></SelectTrigger>
+              <SelectContent>
+                {isSuperAdmin && <SelectItem value="all">All branches</SelectItem>}
+                {(branches as any[]).filter(branch => isSuperAdmin || branch.id === branchId).map(branch => <SelectItem key={branch.id} value={String(branch.id)}>{branch.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button className="self-end" onClick={handleSearch}>Search</Button>
+          {search && <Button className="self-end" variant="ghost" onClick={clearSearch}>Clear</Button>}
         </div>
-        <Button size="sm" onClick={handleSearch}>Search</Button>
-        {search && (
-          <Button size="sm" variant="ghost" onClick={clearSearch}>Clear</Button>
-        )}
+        {searchError && <p className="mt-2 text-sm text-destructive">{searchError}</p>}
+        {!searchField && !searchError && <p className="mt-2 text-xs text-muted-foreground">Choose a search field before entering a search value.</p>}
       </div>
 
       {/* ── Table ───────────────────────────────────────────────── */}

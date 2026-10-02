@@ -7,6 +7,8 @@ import { StatsCard } from "@/components/StatsCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -17,6 +19,7 @@ import {
   AlertTriangle, ShieldAlert,
 } from "lucide-react";
 import { getBooksPaginated, getInventoryStats, checkBookDependencies, deleteBooks } from "@/lib/services/books";
+import { getBranches } from "@/lib/services/branches";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -30,6 +33,12 @@ const DeleteBooks = () => {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [inputVal, setInputVal] = useState("");
+  const [searchField, setSearchField] = useState<"" | "accession_number" | "call_no" | "title" | "author" | "publisher" | "isbn">("");
+  const [selectedBranch, setSelectedBranch] = useState("all");
+  const [searchError, setSearchError] = useState("");
+  const effectiveBranchId = isSuperAdmin
+    ? (selectedBranch === "all" ? null : Number(selectedBranch))
+    : branchId;
 
   // Selection state
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -40,16 +49,21 @@ const DeleteBooks = () => {
   const [blockedOpen, setBlockedOpen] = useState(false);
   const [blockedBooks, setBlockedBooks] = useState<any[]>([]);
 
+  const { data: branches = [], isLoading: branchesLoading } = useQuery({
+    queryKey: ["library-branches"],
+    queryFn: getBranches,
+  });
+
   // ── Stats ──
   const { data: stats } = useQuery({
-    queryKey: ["inventory-stats", branchId],
-    queryFn: () => getInventoryStats(branchId),
+    queryKey: ["inventory-stats", effectiveBranchId],
+    queryFn: () => getInventoryStats(effectiveBranchId),
   });
 
   // ── Paginated books ──
   const { data: pageResult, isLoading, isFetching } = useQuery({
-    queryKey: ["books-paged", branchId, page, search],
-    queryFn: () => getBooksPaginated({ page, pageSize: PAGE_SIZE, branch_id: branchId, search: search || undefined }),
+    queryKey: ["books-paged", effectiveBranchId, page, search, searchField],
+    queryFn: () => getBooksPaginated({ page, pageSize: PAGE_SIZE, branch_id: effectiveBranchId, search: search || undefined, searchField: searchField || undefined }),
     placeholderData: (prev) => prev,
   });
 
@@ -60,8 +74,21 @@ const DeleteBooks = () => {
   const to = Math.min(page * PAGE_SIZE + PAGE_SIZE, totalCount);
 
   function handleSearch() {
+    const value = inputVal.trim();
+    if (!value) {
+      setSearch("");
+      setSearchError("");
+      setPage(0);
+      setSelected(new Set());
+      return;
+    }
+    if (!searchField) {
+      setSearchError("Select a field before searching.");
+      return;
+    }
+    setSearchError("");
     setPage(0);
-    setSearch(inputVal.trim());
+    setSearch(value);
     setSelected(new Set());
   }
 
@@ -72,6 +99,7 @@ const DeleteBooks = () => {
   function clearSearch() {
     setInputVal("");
     setSearch("");
+    setSearchError("");
     setPage(0);
     setSelected(new Set());
   }
@@ -112,7 +140,7 @@ const DeleteBooks = () => {
     if (accessionNumbers.length === 0) return;
 
     try {
-      const blocked = await checkBookDependencies(accessionNumbers, branchId);
+      const blocked = await checkBookDependencies(accessionNumbers, effectiveBranchId);
       if (blocked.length > 0) {
         setBlockedBooks(blocked);
         setBlockedOpen(true);
@@ -142,7 +170,7 @@ const DeleteBooks = () => {
 
   // ── Execute delete ──
   const deleteMutation = useMutation({
-    mutationFn: (accNos: string[]) => deleteBooks(accNos, branchId),
+    mutationFn: (accNos: string[]) => deleteBooks(accNos, effectiveBranchId),
     onSuccess: (count) => {
       toast.success(`${count} book${count > 1 ? "s" : ""} deleted permanently`);
       setSelected(new Set());
@@ -186,22 +214,42 @@ const DeleteBooks = () => {
         <StatsCard title="Lost" value={stats?.lost ?? "…"} icon={AlertTriangle} color="destructive" />
       </div>
 
-      {/* ── Search bar ── */}
-      <div className="flex gap-2">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by title, author, accession no…"
-            className="pl-9"
-            value={inputVal}
-            onChange={e => setInputVal(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
+      {/* ── Field-specific search ── */}
+      <div className="rounded-lg border border-border bg-card p-4">
+        <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)_220px_auto_auto]">
+          <div>
+            <Label htmlFor="delete-search-field">Search field</Label>
+            <Select value={searchField} onValueChange={(value) => { setSearchField(value as typeof searchField); setSearchError(""); }}>
+              <SelectTrigger id="delete-search-field" className="mt-1"><SelectValue placeholder="Select field" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="accession_number">Accession Number</SelectItem><SelectItem value="call_no">Call Number</SelectItem>
+                <SelectItem value="title">Title</SelectItem><SelectItem value="author">Author</SelectItem>
+                <SelectItem value="publisher">Publisher</SelectItem><SelectItem value="isbn">ISBN</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="delete-search">Search value</Label>
+            <div className="relative mt-1"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input id="delete-search" placeholder={searchField ? "Enter search value" : "Choose a field first"} className="pl-9" value={inputVal}
+                onChange={e => { setInputVal(e.target.value); if (e.target.value.trim() && !searchField) setSearchError("Select a field before searching."); }} onKeyDown={handleKeyDown} />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="delete-branch">Branch</Label>
+            <Select value={isSuperAdmin ? selectedBranch : (branchId == null ? "all" : String(branchId))} onValueChange={(value) => { setSelectedBranch(value); setPage(0); setSelected(new Set()); }} disabled={branchesLoading || !isSuperAdmin}>
+              <SelectTrigger id="delete-branch" className="mt-1"><SelectValue placeholder="All branches" /></SelectTrigger>
+              <SelectContent>
+                {isSuperAdmin && <SelectItem value="all">All branches</SelectItem>}
+                {(branches as any[]).filter(branch => isSuperAdmin || branch.id === branchId).map(branch => <SelectItem key={branch.id} value={String(branch.id)}>{branch.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button className="self-end" onClick={handleSearch}>Search</Button>
+          {search && <Button className="self-end" variant="ghost" onClick={clearSearch}>Clear</Button>}
         </div>
-        <Button size="sm" onClick={handleSearch}>Search</Button>
-        {search && (
-          <Button size="sm" variant="ghost" onClick={clearSearch}>Clear</Button>
-        )}
+        {searchError && <p className="mt-2 text-sm text-destructive">{searchError}</p>}
+        {!searchField && !searchError && <p className="mt-2 text-xs text-muted-foreground">Choose a search field before entering a search value.</p>}
       </div>
 
       {/* ── Table ── */}
@@ -293,13 +341,13 @@ const DeleteBooks = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <ShieldAlert className="w-5 h-5" /> Cannot Delete — Borrowing Records Found
+              <ShieldAlert className="w-5 h-5" /> Cannot Delete — Book Currently Issued
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3">
                 <p>
-                  The following books have been issued to a student or faculty member.
-                  Their borrowing history must be kept, so these copies cannot be deleted.
+                  The following books are currently issued to a student or faculty member.
+                  Return them before deleting the inventory copy.
                 </p>
                 <div className="max-h-48 overflow-y-auto rounded-md border border-border">
                   <table className="w-full text-sm">
@@ -307,7 +355,7 @@ const DeleteBooks = () => {
                       <tr>
                         <th className="text-left px-3 py-2 font-medium">Accession No.</th>
                         <th className="text-left px-3 py-2 font-medium">Issued To</th>
-                        <th className="text-left px-3 py-2 font-medium">Issue Status</th>
+                        <th className="text-left px-3 py-2 font-medium">Due Date</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -315,7 +363,7 @@ const DeleteBooks = () => {
                         <tr key={i} className="border-t border-border/50">
                           <td className="px-3 py-2 font-mono text-xs">{b.accession_number}</td>
                           <td className="px-3 py-2">{b.user_id}</td>
-                          <td className="px-3 py-2">{b.is_returned ? "Returned" : "Currently issued"}</td>
+                          <td className="px-3 py-2">{b.due_date}</td>
                         </tr>
                       ))}
                     </tbody>
