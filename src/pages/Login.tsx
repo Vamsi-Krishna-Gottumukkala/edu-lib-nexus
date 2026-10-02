@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { BookOpen, User, Eye, EyeOff, Loader2, Mail, Lock, LogIn } from "lucide-react";
+import { User, Eye, EyeOff, Loader2, Mail, Lock, LogIn } from "lucide-react";
 
 export default function Login() {
   const { signInAdmin, signInStudent } = useAuth();
@@ -45,28 +45,20 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-[#fafafa] flex flex-col font-sans">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center gap-4">
-        {/* College Emblem */}
-        <img src="/gvplogo.png" alt="GVP Logo" className="w-[64px] h-[64px] object-contain shrink-0" />
-        <div>
-          <h1 className="text-[17px] md:text-[20px] font-bold text-slate-900 tracking-tight">
-            Gayatri Vidya Parishad Institute of Higher Learning and Research
-          </h1>
-          <p className="text-[15px] font-light text-slate-500 md:text-[18px]">Deemed to be University</p>
-        </div>
-      </header>
-
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center p-4">
         
-        {/* Central Logo & Title */}
-        <div className="flex flex-col items-center pb-8">
-          <div className="w-[48px] h-[48px] bg-blue-600 rounded-[14px] flex items-center justify-center shadow-sm mb-4">
-            <BookOpen className="w-[22px] h-[22px] text-white" strokeWidth={2.5} />
+        {/* Central institution branding */}
+        <div className="flex w-full max-w-6xl flex-col items-center pb-8 text-center">
+          <img src="/gvplogo.png" alt="GVP Logo" className="mb-5 h-[138px] w-[138px] shrink-0 object-contain" />
+          <div>
+            <h1 className="text-[24px] font-bold tracking-tight text-slate-900 md:text-[29px] lg:whitespace-nowrap">
+              Gayatri Vidya Parishad Institute of Higher Learning and Research
+            </h1>
+            <p className="mt-1 text-xs font-light leading-tight text-slate-500 md:text-sm">
+              (Deemed to be University under Distinct Category under Section 3 of the UGC Act, 1956)
+            </p>
           </div>
-          <h2 className="text-[22px] font-bold text-slate-900 mb-1 tracking-tight">EduLibrary</h2>
-          <p className="text-[13px] text-slate-500 font-medium">University Library Management System</p>
         </div>
 
         {/* Login Card */}
