@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getIssueByAccession, returnBook, getIssuedBooks } from "@/lib/services/issues";
+import { getSettings } from "@/lib/services/settings";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, AlertTriangle, BookOpen } from "lucide-react";
+import { Loader2, CheckCircle, AlertTriangle, BookOpen, Pencil } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { DataTable } from "@/components/DataTable";
 import { fmtDate } from "@/lib/utils";
@@ -17,8 +18,14 @@ const ReturnBook = () => {
   const queryClient = useQueryClient();
   const [accessionNo, setAccessionNo] = useState("");
   const [lookupAccession, setLookupAccession] = useState<string | null>(null);
+  const [editingFine, setEditingFine] = useState(false);
+  const [customFine, setCustomFine] = useState<string>("");
 
   const returnDate = new Date().toISOString().split("T")[0];
+
+  // Fetch settings for dynamic fine_per_day
+  const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: getSettings });
+  const finePerDay = settings?.fine_per_day ? Number(settings.fine_per_day) : 5;
 
   // Active issued books for this branch
   const { data: activeIssues = [], isLoading: loadingActive } = useQuery({
@@ -34,21 +41,39 @@ const ReturnBook = () => {
     retry: false,
   });
 
-  const fine = issueRecord ? (() => {
+  // Calculate fine dynamically from settings — fine starts from the day AFTER due date
+  const calculatedFine = issueRecord ? (() => {
     const today = new Date();
     const due = new Date(issueRecord.due_date);
-    const diff = Math.ceil((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
-    return diff > 0 ? diff * 5 : 0;
+    // Math.floor ensures the due date itself is NOT counted
+    const diff = Math.floor((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff * finePerDay : 0;
   })() : 0;
 
+  // The fine to display and use — custom override or calculated
+  const displayFine = editingFine ? Number(customFine) || 0 : calculatedFine;
+
+  // Reset fine editing state when a new record is loaded
+  useEffect(() => {
+    if (issueRecord) {
+      setEditingFine(false);
+      setCustomFine(String(calculatedFine));
+    }
+  }, [issueRecord, calculatedFine]);
+
   const returnMutation = useMutation({
-    mutationFn: () => returnBook(lookupAccession!, branchId),
+    mutationFn: () => {
+      const fineToCharge = editingFine ? Number(customFine) || 0 : undefined;
+      return returnBook(lookupAccession!, branchId, fineToCharge);
+    },
     onSuccess: (data) => {
       toast.success(
         `Book returned successfully!${data.fine > 0 ? ` Fine collected: ₹${data.fine}` : ""}`
       );
       setAccessionNo("");
       setLookupAccession(null);
+      setEditingFine(false);
+      setCustomFine("");
       queryClient.invalidateQueries({ queryKey: ["issued-books"] });
       queryClient.invalidateQueries({ queryKey: ["issued-books-active"] });
       queryClient.invalidateQueries({ queryKey: ["returned-books"] });
@@ -139,10 +164,52 @@ const ReturnBook = () => {
                 <p><span className="font-medium">Issue Date:</span> {issueRecord.issue_date}</p>
                 <p><span className="font-medium">Due Date:</span> {issueRecord.due_date}</p>
                 <p><span className="font-medium">Return Date:</span> {returnDate}</p>
-                {fine > 0 ? (
-                  <div className="flex items-center gap-2 text-red-500 font-semibold pt-1">
-                    <AlertTriangle className="w-4 h-4" />
-                    Overdue Fine: ₹{fine}
+                {calculatedFine > 0 ? (
+                  <div className="pt-1 space-y-2">
+                    <div className="flex items-center gap-2 text-red-500 font-semibold">
+                      <AlertTriangle className="w-4 h-4" />
+                      Overdue Fine: ₹{calculatedFine}
+                      <span className="text-xs text-muted-foreground font-normal">(₹{finePerDay}/day)</span>
+                    </div>
+                    {/* Editable Fine */}
+                    <div className="flex items-center gap-2">
+                      {editingFine ? (
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs whitespace-nowrap">Fine Amount (₹):</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={customFine}
+                            onChange={e => setCustomFine(e.target.value)}
+                            className="w-28 h-8 text-sm"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs h-8"
+                            onClick={() => {
+                              setEditingFine(false);
+                              setCustomFine(String(calculatedFine));
+                            }}
+                          >
+                            Reset
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs h-7 gap-1 text-muted-foreground"
+                          onClick={() => {
+                            setEditingFine(true);
+                            setCustomFine(String(calculatedFine));
+                          }}
+                        >
+                          <Pencil className="w-3 h-3" />
+                          Edit Fine Amount
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <p className="text-green-600 font-medium pt-1">✓ Returned on time — No fine</p>
@@ -155,7 +222,7 @@ const ReturnBook = () => {
               >
                 {returnMutation.isPending ? (
                   <><Loader2 className="w-4 h-4 animate-spin mr-2" />Processing...</>
-                ) : `Process Return${fine > 0 ? ` (Fine: ₹${fine})` : ""}`}
+                ) : `Process Return${displayFine > 0 ? ` (Fine: ₹${displayFine})` : ""}`}
               </Button>
             </div>
           )}

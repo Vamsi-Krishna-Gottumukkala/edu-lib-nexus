@@ -1,6 +1,14 @@
 import { supabase } from '../supabase'
 
-const FINE_PER_DAY = 5
+/** Fetch the configured fine-per-day from system_settings (defaults to 5 if missing) */
+async function getFinePerDay(): Promise<number> {
+  const { data } = await supabase
+    .from('system_settings')
+    .select('value')
+    .eq('key', 'fine_per_day')
+    .maybeSingle()
+  return data?.value ? Number(data.value) : 5
+}
 
 export async function issueBook(userId: string, accessionNumber: string, branchId: number | null, dueDays = 14) {
   const dueDate = new Date()
@@ -41,7 +49,7 @@ export async function issueBook(userId: string, accessionNumber: string, branchI
   return issue
 }
 
-export async function returnBook(accessionNumber: string, branchId?: number | null) {
+export async function returnBook(accessionNumber: string, branchId?: number | null, customFine?: number) {
   // Find open issue — no join, no branch filter on lookup
   const { data: issue, error: findErr } = await supabase
     .from('book_issues')
@@ -54,10 +62,16 @@ export async function returnBook(accessionNumber: string, branchId?: number | nu
 
   if (findErr || !issue) throw new Error('No active issue found for this accession number.')
 
+  const finePerDay = await getFinePerDay()
+
   const today = new Date()
   const dueDate = new Date(issue.due_date)
+  // Fine starts from the day AFTER the due date. Math.floor ensures the due date itself is not counted.
   const overdueDays = Math.max(0, Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)))
-  const fine = overdueDays * FINE_PER_DAY
+  const calculatedFine = overdueDays * finePerDay
+
+  // Use admin-overridden fine if provided, otherwise use calculated
+  const fine = customFine !== undefined ? customFine : calculatedFine
 
   const { data: updated, error: updateErr } = await supabase
     .from('book_issues')
@@ -181,11 +195,13 @@ export async function getIssueByAccession(accessionNumber: string, branchId?: nu
 }
 
 export async function calculateFine(dueDate: string) {
+  const finePerDay = await getFinePerDay()
   const today = new Date()
   const due = new Date(dueDate)
   const diffMs = today.getTime() - due.getTime()
+  // Fine starts from the day AFTER the due date
   const overdueDays = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)))
-  return { overdueDays, fine: overdueDays * FINE_PER_DAY }
+  return { overdueDays, fine: overdueDays * finePerDay }
 }
 
 export async function getCirculationStats() {

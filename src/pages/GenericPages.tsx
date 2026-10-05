@@ -653,6 +653,9 @@ export const StudentDueBooks = () => {
     enabled: !!userId,
   });
 
+  const { data: settingsData } = useQuery({ queryKey: ["settings"], queryFn: getSettings });
+  const finePerDay = settingsData?.fine_per_day ? Number(settingsData.fine_per_day) : 5;
+
   const overdue = myBooks.filter((b: any) => b.due_date && new Date(b.due_date) < new Date());
   const upcoming = myBooks.filter((b: any) => b.due_date && new Date(b.due_date) >= new Date());
 
@@ -677,15 +680,15 @@ export const StudentDueBooks = () => {
                   {
                     header: "Days Overdue",
                     accessor: (row: any) => {
-                      const diff = Math.ceil((new Date().getTime() - new Date(row.due_date).getTime()) / (1000 * 60 * 60 * 24));
+                      const diff = Math.floor((new Date().getTime() - new Date(row.due_date).getTime()) / (1000 * 60 * 60 * 24));
                       return <span className="font-semibold text-destructive">{diff} days</span>;
                     },
                   },
                   {
                     header: "Fine",
                     accessor: (row: any) => {
-                      const diff = Math.ceil((new Date().getTime() - new Date(row.due_date).getTime()) / (1000 * 60 * 60 * 24));
-                      return <span className="font-semibold">₹{diff * 5}</span>;
+                      const diff = Math.floor((new Date().getTime() - new Date(row.due_date).getTime()) / (1000 * 60 * 60 * 24));
+                      return <span className="font-semibold">₹{diff * finePerDay}</span>;
                     },
                   },
                 ]}
@@ -1186,7 +1189,8 @@ export const AttendanceHistory = () => {
 
 /* ── Student: Profile ── */
 export const StudentProfile = () => {
-  const { userId, userName, studentData } = useAuth();
+  const { userId, userName, studentData, role, facultyData } = useAuth();
+  const isFaculty = role === "faculty";
   const { data: myBooks = [] } = useQuery({
     queryKey: ["student-issued", userId],
     queryFn: () => getIssuedBooks(userId),
@@ -1220,10 +1224,16 @@ export const StudentProfile = () => {
               <p className="text-sm font-medium">{userName}</p>
             </div>
             <div>
-              <Label className="text-muted-foreground text-xs">Roll Number</Label>
+              <Label className="text-muted-foreground text-xs">{isFaculty ? "Faculty Number" : "Roll Number"}</Label>
               <p className="text-sm font-medium">{userId}</p>
             </div>
-            {studentData?.program_id && (
+            {isFaculty && facultyData?.designation && (
+              <div>
+                <Label className="text-muted-foreground text-xs">Designation</Label>
+                <p className="text-sm font-medium">{facultyData.designation}</p>
+              </div>
+            )}
+            {!isFaculty && studentData?.program_id && (
               <div>
                 <Label className="text-muted-foreground text-xs">Year</Label>
                 <p className="text-sm font-medium">{studentData.year ? `Year ${studentData.year}` : "—"}</p>
@@ -1248,3 +1258,4 @@ export const StudentProfile = () => {
     </div>
   );
 };
+
