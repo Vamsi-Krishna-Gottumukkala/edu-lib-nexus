@@ -4,13 +4,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { User, Eye, EyeOff, Loader2, Mail, Lock, LogIn } from "lucide-react";
 
 export default function Login() {
-  const { signInAdmin, signInStudent } = useAuth();
+  const { signInAdmin, signInStudent, signInFaculty } = useAuth();
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<"admin" | "student">("admin");
+  const [tab, setTab] = useState<"user" | "admin">("user");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rollNo, setRollNo] = useState("");
+  const [idInput, setIdInput] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -29,15 +29,26 @@ export default function Login() {
     }
   };
 
-  const handleStudentLogin = async (e: React.FormEvent) => {
+  const handleUserLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      await signInStudent(rollNo);
-      navigate("/student");
+      try {
+        await signInStudent(idInput);
+        navigate("/student");
+        return;
+      } catch (studentErr: any) {
+        try {
+          await signInFaculty(idInput);
+          navigate("/student");
+          return;
+        } catch (facultyErr: any) {
+          throw new Error("Invalid Roll Number or Faculty Number.");
+        }
+      }
     } catch (err: any) {
-      setError(err.message || "Roll number not found");
+      setError(err.message || "User not found.");
     } finally {
       setLoading(false);
     }
@@ -68,24 +79,24 @@ export default function Login() {
             <div className="text-center mb-6">
               <h3 className="text-lg font-bold text-slate-900">Welcome back</h3>
               <p className="text-[13px] text-slate-500 mt-1.5">
-                Sign in with your {tab === "admin" ? "institutional email" : "roll number"}
+                Sign in with your {tab === "admin" ? "institutional email" : "roll number or faculty number"}
               </p>
             </div>
 
-            {/* Subtle Tab Switcher */}
+            {/* Tab Switcher — Student/Faculty first, Admin second */}
             <div className="flex justify-center mb-6">
               <div className="bg-slate-100 p-1 rounded-lg inline-flex">
+                <button 
+                  onClick={() => { setTab('user'); setError(""); }} 
+                  className={`px-4 py-1.5 text-[12px] font-semibold rounded-md transition-all ${tab === 'user' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  Student / Faculty
+                </button>
                 <button 
                   onClick={() => { setTab('admin'); setError(""); }} 
                   className={`px-4 py-1.5 text-[12px] font-semibold rounded-md transition-all ${tab === 'admin' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                   Admin
-                </button>
-                <button 
-                  onClick={() => { setTab('student'); setError(""); }} 
-                  className={`px-4 py-1.5 text-[12px] font-semibold rounded-md transition-all ${tab === 'student' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                  Student
                 </button>
               </div>
             </div>
@@ -153,27 +164,24 @@ export default function Login() {
               </form>
             )}
 
-            {/* Student Form */}
-            {tab === "student" && (
-              <form onSubmit={handleStudentLogin} className="space-y-4">
+            {/* Student / Faculty Form */}
+            {tab === "user" && (
+              <form onSubmit={handleUserLogin} className="space-y-4">
                 <div>
                   <label className="block text-[12px] text-slate-700 font-medium mb-1.5 flex items-center justify-between">
-                    Roll Number
+                    Roll Number / Faculty Number
                   </label>
                   <div className="flex items-center bg-white border border-slate-200 rounded-md focus-within:ring-2 focus-within:ring-[#1a65f8]/20 focus-within:border-[#1a65f8] overflow-hidden transition-all">
                     <User className="w-4 h-4 text-slate-400 ml-3.5 shrink-0" />
                     <input
                       type="text"
-                      value={rollNo}
-                      onChange={(e) => setRollNo(e.target.value)}
-                      placeholder="e.g. 5221411057"
+                      value={idInput}
+                      onChange={(e) => setIdInput(e.target.value)}
+                      placeholder="e.g. 5221411057 or GVP/T/001"
                       required
                       className="w-full px-3 py-2.5 text-[13px] text-slate-900 placeholder:text-slate-400 focus:outline-none"
                     />
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-2">
-                    Your password is your roll number.
-                  </p>
                 </div>
                 
                 <button
@@ -192,13 +200,13 @@ export default function Login() {
           </div>
 
           {/* Card Footer */}
-          <div className="border-t border-slate-100 py-4 px-4 sm:px-8 bg-slate-50/50">
-            <p className="text-[11px] text-slate-500 text-center">
-              {tab === "admin" 
-                ? "Use your institutional domain email to sign in." 
-                : "Students do not require an email password to access the portal."}
-            </p>
-          </div>
+          {tab === "admin" && (
+            <div className="border-t border-slate-100 py-4 px-4 sm:px-8 bg-slate-50/50">
+              <p className="text-[11px] text-slate-500 text-center">
+                Use your institutional domain email to sign in.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Page Footer */}

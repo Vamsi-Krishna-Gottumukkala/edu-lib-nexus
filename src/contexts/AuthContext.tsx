@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { supabase } from "@/lib/supabase";
 
-export type UserRole = "admin" | "student";
+export type UserRole = "admin" | "student" | "faculty";
 
 const SUPER_ADMIN_EMAIL = "gvpcentrallibrary@gvpcdpgc.edu.in";
 
@@ -18,6 +18,15 @@ export interface StudentSession {
   program_id: number | null;
   year: number | null;
   department_id: number | null;
+  branch_id: number | null;
+}
+
+export interface FacultySession {
+  user_id: string;
+  user_name: string;
+  user_type: string;
+  department_id: number | null;
+  designation: string | null;
   branch_id: number | null;
 }
 
@@ -32,26 +41,31 @@ interface AuthContextType {
   userName: string;
   userId: string;
   studentData: StudentSession | null;
+  facultyData: FacultySession | null;
   loading: boolean;
   isSuperAdmin: boolean;
   adminBranch: AdminBranchInfo | null;
   signInAdmin: (email: string, password: string) => Promise<void>;
   signInStudent: (rollNo: string) => Promise<void>;
+  signInFaculty: (facultyNo: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const STUDENT_SESSION_KEY = "lib_student_session";
+const FACULTY_SESSION_KEY = "lib_faculty_session";
 
 const AuthContext = createContext<AuthContextType>({
   role: null,
   userName: "",
   userId: "",
   studentData: null,
+  facultyData: null,
   loading: true,
   isSuperAdmin: false,
   adminBranch: null,
   signInAdmin: async () => {},
   signInStudent: async () => {},
+  signInFaculty: async () => {},
   signOut: async () => {},
 });
 
@@ -83,6 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userName, setUserName] = useState("");
   const [userId, setUserId] = useState("");
   const [studentData, setStudentData] = useState<StudentSession | null>(null);
+  const [facultyData, setFacultyData] = useState<FacultySession | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [adminBranch, setAdminBranch] = useState<AdminBranchInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -132,6 +147,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             localStorage.removeItem(STUDENT_SESSION_KEY);
           }
         }
+
+        const storedFaculty = localStorage.getItem(FACULTY_SESSION_KEY);
+        if (storedFaculty) {
+          try {
+            const faculty: FacultySession = JSON.parse(storedFaculty);
+            setRole("faculty");
+            setUserName(faculty.user_name);
+            setUserId(faculty.user_id);
+            setFacultyData(faculty);
+          } catch {
+            localStorage.removeItem(FACULTY_SESSION_KEY);
+          }
+        }
       } catch {
         // ignore — setLoading(false) in finally handles this
       } finally {
@@ -144,7 +172,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
-        if (!localStorage.getItem(STUDENT_SESSION_KEY)) {
+        if (!localStorage.getItem(STUDENT_SESSION_KEY) && !localStorage.getItem(FACULTY_SESSION_KEY)) {
           setRole(null);
           setUserName("");
           setUserId("");
@@ -183,15 +211,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setStudentData(student);
   };
 
+  const signInFaculty = async (facultyNo: string) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('user_id, user_name, user_type, department_id, designation, branch_id')
+      .eq('user_id', facultyNo)
+      .eq('user_type', 'faculty')
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) {
+      throw new Error("Invalid faculty number. Faculty not found.");
+    }
+    const faculty: FacultySession = {
+      user_id: data.user_id,
+      user_name: data.user_name,
+      user_type: data.user_type,
+      department_id: data.department_id,
+      designation: data.designation,
+      branch_id: data.branch_id,
+    };
+    localStorage.setItem(FACULTY_SESSION_KEY, JSON.stringify(faculty));
+    setRole("faculty");
+    setUserName(faculty.user_name);
+    setUserId(faculty.user_id);
+    setFacultyData(faculty);
+  };
+
   const signOut = async () => {
     if (role === "admin") {
       await supabase.auth.signOut();
     }
     localStorage.removeItem(STUDENT_SESSION_KEY);
+    localStorage.removeItem(FACULTY_SESSION_KEY);
     setRole(null);
     setUserName("");
     setUserId("");
     setStudentData(null);
+    setFacultyData(null);
     setIsSuperAdmin(false);
     setAdminBranch(null);
   };
@@ -203,11 +259,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         userName,
         userId,
         studentData,
+        facultyData,
         loading,
         isSuperAdmin,
         adminBranch,
         signInAdmin,
         signInStudent,
+        signInFaculty,
         signOut,
       }}
     >

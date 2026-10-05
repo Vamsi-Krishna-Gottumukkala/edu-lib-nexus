@@ -12,8 +12,9 @@ import { fmtDate } from "@/lib/utils";
 import { getPapers } from "@/lib/services/papers";
 
 const StudentDashboard = () => {
-  const { userId, userName, studentData } = useAuth();
-  const branchId = studentData?.branch_id ?? null;
+  const { userId, userName, studentData, role, facultyData } = useAuth();
+  const branchId = studentData?.branch_id ?? facultyData?.branch_id ?? null;
+  const isFaculty = role === "faculty";
 
   const { data: myBooks = [], isLoading: booksLoading } = useQuery({
     queryKey: ["student-issued", userId],
@@ -37,8 +38,8 @@ const StudentDashboard = () => {
   return (
     <div className="animate-fade-in">
       <PageHeader
-        title="Student Dashboard"
-        description={`Welcome back, ${userName || "Student"}`}
+        title={isFaculty ? "Faculty Dashboard" : "Student Dashboard"}
+        description={`Welcome back, ${userName || (isFaculty ? "Faculty" : "Student")}`}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

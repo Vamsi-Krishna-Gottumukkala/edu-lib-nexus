@@ -26,8 +26,11 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole && role !== requiredRole) {
-    return <Navigate to={role === "admin" ? "/admin" : "/student"} replace />;
+  // Faculty shares the student portal
+  const effectiveRole = role === "faculty" ? "student" : role;
+
+  if (requiredRole && effectiveRole !== requiredRole) {
+    return <Navigate to={effectiveRole === "admin" ? "/admin" : "/student"} replace />;
   }
 
   return <>{children}</>;
