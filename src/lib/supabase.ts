@@ -92,6 +92,19 @@ export interface BookIssue {
   users?: { user_name: string }
 }
 
+export interface TransferLog {
+  id: number
+  accession_number: string
+  book_title: string | null
+  book_author: string | null
+  from_branch_id: number | null
+  to_branch_id: number | null
+  transferred_by: string | null
+  transfer_date: string
+  from_branch?: { name: string }
+  to_branch?: { name: string }
+}
+
 export interface QuestionPaper {
   id: number
   subject_name: string

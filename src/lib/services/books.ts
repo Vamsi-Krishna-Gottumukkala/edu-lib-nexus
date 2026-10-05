@@ -1,4 +1,4 @@
-import { supabase, BookCopy } from '../supabase'
+import { supabase, BookCopy, TransferLog } from '../supabase'
 
 export type BookSearchField =
   | 'accession_number'
@@ -253,4 +253,30 @@ export async function deleteBooks(accessionNumbers: string[], branchId?: number 
   const { data, error } = await query.select('accession_number')
   if (error) throw error
   return data?.length ?? 0
+}
+
+export async function logTransfer(log: Omit<TransferLog, 'id' | 'transfer_date' | 'book_copies' | 'from_branch' | 'to_branch'>) {
+  const { error } = await supabase
+    .from('transfer_logs')
+    .insert(log)
+  if (error) throw error
+}
+
+export async function getTransferLogs(branchId?: number | null) {
+  let query = supabase
+    .from('transfer_logs')
+    .select(`
+      *,
+      from_branch:library_branches!transfer_logs_from_branch_id_fkey(name),
+      to_branch:library_branches!transfer_logs_to_branch_id_fkey(name)
+    `)
+    .order('transfer_date', { ascending: false })
+
+  if (branchId != null) {
+    query = query.eq('to_branch_id', branchId)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return data
 }

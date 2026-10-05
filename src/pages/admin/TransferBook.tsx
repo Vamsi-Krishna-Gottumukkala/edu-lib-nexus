@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getBookByAccession, updateBook } from "@/lib/services/books";
+import { getBookByAccession, updateBook, logTransfer } from "@/lib/services/books";
 import { getBranches } from "@/lib/services/branches";
 import { toast } from "sonner";
 import { Loader2, CheckCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const TransferBook = () => {
-  const { adminBranch, isSuperAdmin } = useAuth();
+  const { adminBranch, isSuperAdmin, userId } = useAuth();
   const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
   const queryClient = useQueryClient();
   const [accessionNo, setAccessionNo] = useState("");
@@ -29,11 +29,18 @@ const TransferBook = () => {
   });
 
   const transferMutation = useMutation({
-    mutationFn: () =>
-      updateBook(lookupAccession!, {
+    mutationFn: async () => {
+      await logTransfer({
+        accession_number: lookupAccession!,
+        from_branch_id: foundBook!.branch_id,
+        to_branch_id: parseInt(toBranchId),
+        transferred_by: userId || null,
+      });
+      return updateBook(lookupAccession!, {
         branch_id: parseInt(toBranchId),
         status: "Available",
-      }, branchId),
+      }, branchId);
+    },
     onSuccess: () => {
       const branch = (branches as any[]).find(b => String(b.id) === toBranchId);
       toast.success(`Book transferred to ${branch?.name || "new branch"} successfully!`);

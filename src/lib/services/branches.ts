@@ -46,16 +46,22 @@ export async function deleteBranch(id: number) {
 }
 
 export async function getBranchStats() {
-  const { data: branches } = await supabase.from('library_branches').select('id, name')
-  const { data: books } = await supabase.from('book_copies').select('branch_id, status')
+  const { data: branches } = await supabase.from('library_branches').select('*')
+  
+  if (!branches) return []
 
-  return branches?.map(branch => {
-    const branchBooks = books?.filter(b => b.branch_id === branch.id) ?? []
+  const stats = await Promise.all(branches.map(async (branch) => {
+    const { count: total } = await supabase.from('book_copies').select('*', { count: 'exact', head: true }).eq('branch_id', branch.id)
+    const { count: available } = await supabase.from('book_copies').select('*', { count: 'exact', head: true }).eq('branch_id', branch.id).eq('status', 'Available')
+    const { count: issued } = await supabase.from('book_copies').select('*', { count: 'exact', head: true }).eq('branch_id', branch.id).eq('status', 'Issued')
+
     return {
       ...branch,
-      total: branchBooks.length,
-      available: branchBooks.filter(b => b.status === 'Available').length,
-      issued: branchBooks.filter(b => b.status === 'Issued').length,
+      total: total || 0,
+      available: available || 0,
+      issued: issued || 0,
     }
-  }) ?? []
+  }))
+
+  return stats
 }

@@ -45,7 +45,7 @@ import StudentDashboard from "@/pages/student/StudentDashboard";
 // Generic pages
 import {
   VisitHistory, ManagePapers, DownloadAnalytics, SubjectPopularity,
-  AddBranch, ManageBranches, ReportLost, ReportWithdrawn, ReportGate,
+  AddBranch, ManageBranches, ReportLost, ReportWithdrawn, ReportTransferred, ReportGate,
   ReportVisits, UserManagement, SystemSettings,
   StudentIssuedBooks, StudentDueBooks, BrowseBooks, BrowseEbooks, BranchAvailability,
   BrowsePapers, DownloadPapers, MyVisits, AttendanceHistory, StudentProfile,
@@ -110,6 +110,7 @@ const App = () => (
                 <Route path="/admin/report-issued" element={<ReportIssued />} />
                 <Route path="/admin/report-lost" element={<ReportLost />} />
                 <Route path="/admin/report-withdrawn" element={<ReportWithdrawn />} />
+                <Route path="/admin/report-transferred" element={<ReportTransferred />} />
                 <Route path="/admin/report-gate" element={<ReportGate />} />
                 <Route path="/admin/report-visits" element={<ReportVisits />} />
                 <Route path="/admin/users" element={<UserManagement />} />

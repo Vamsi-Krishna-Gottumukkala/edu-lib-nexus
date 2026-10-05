@@ -79,6 +79,7 @@ export const adminNav: NavItem[] = [
         { title: "Issued Books",   url: "/admin/report-issued",    icon: BookOpen },
         { title: "Lost Books",     url: "/admin/report-lost",      icon: AlertTriangle },
         { title: "Withdraw Books", url: "/admin/report-withdrawn", icon: XCircle },
+        { title: "Transferred Books", url: "/admin/report-transferred", icon: ArrowLeftRight },
       ]},
       { title: "Attendance Reports", icon: Clock, children: [
         { title: "Attendance Report", url: "/admin/attendance-report", icon: BarChart3 },

@@ -5,12 +5,26 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Converts yyyy-mm-dd → dd-mm-yyyy for display. Passes through anything else. */
+/** Converts ISO strings or yyyy-mm-dd to dd-mm-yyyy for display. */
 export function fmtDate(d: string | null | undefined): string {
   if (!d) return "—";
+  
+  // Quick check for pure yyyy-mm-dd
   const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  return m ? `${m[3]}-${m[2]}-${m[1]}` : d;
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+  
+  try {
+    const date = new Date(d);
+    if (isNaN(date.getTime())) return d;
+    const dd = date.getDate().toString().padStart(2, '0');
+    const mth = (date.getMonth() + 1).toString().padStart(2, '0');
+    const yyyy = date.getFullYear();
+    return `${dd}-${mth}-${yyyy}`;
+  } catch {
+    return d;
+  }
 }
+
 
 /** Converts any name (ALL CAPS, lowercase, mixed) to Title Case.
  *  e.g. "ABOTHULA TARUN KUMAR" → "Abothula Tarun Kumar"

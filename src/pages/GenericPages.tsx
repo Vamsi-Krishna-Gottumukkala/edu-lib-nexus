@@ -21,7 +21,7 @@ import { fmtDate, exportToCSV } from "@/lib/utils";
 
 // Services
 import { getAttendanceLogs, getStudentAttendanceLogs, getAttendanceStats } from "@/lib/services/attendance";
-import { getBooks } from "@/lib/services/books";
+import { getBooks, getTransferLogs } from "@/lib/services/books";
 import { getEbooks, isValidEbookUrl } from "@/lib/services/ebooks";
 import { getIssuedBooks } from "@/lib/services/issues";
 import { getPapers, deletePaper, incrementDownload } from "@/lib/services/papers";
@@ -310,9 +310,11 @@ export const ManageBranches = () => {
 
 /* ── Admin: Report Lost ── */
 export const ReportLost = () => {
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
   const { data: lost = [], isLoading } = useQuery({
-    queryKey: ["books", "lost"],
-    queryFn: () => getBooks({ status: "Lost" }),
+    queryKey: ["books", "lost", branchId],
+    queryFn: () => getBooks({ status: "Lost", branch_id: branchId }),
   });
 
   return (
@@ -358,9 +360,11 @@ export const ReportLost = () => {
 
 /* ── Admin: Report Withdrawn ── */
 export const ReportWithdrawn = () => {
+  const { adminBranch, isSuperAdmin } = useAuth();
+  const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
   const { data: withdrawn = [], isLoading } = useQuery({
-    queryKey: ["books", "withdrawn"],
-    queryFn: () => getBooks({ status: "Withdrawn" }),
+    queryKey: ["books", "withdrawn", branchId],
+    queryFn: () => getBooks({ status: "Withdrawn", branch_id: branchId }),
   });
 
   return (
@@ -394,6 +398,51 @@ export const ReportWithdrawn = () => {
             { header: "Status", accessor: () => <StatusBadge status="Withdrawn" /> },
           ]}
           data={withdrawn}
+        />
+      )}
+    </div>
+  );
+};
+
+/* ── Admin: Report Transferred ── */
+export const ReportTransferred = () => {
+  const { data: transferred = [], isLoading } = useQuery({
+    queryKey: ["transfer-logs", "all"],
+    queryFn: () => getTransferLogs(null),
+  });
+
+  return (
+    <div className="animate-fade-in">
+      <PageHeader title="Transferred Books Report" description={`${transferred.length} books transferred into this branch`}>
+        <Button variant="outline" onClick={() => {
+          if (!transferred || transferred.length === 0) {
+            toast.error("Nothing to export");
+            return;
+          }
+          exportToCSV(transferred.map((t: any) => ({
+            'Accession No': t.accession_number,
+            'Title': t.book_title,
+            'Author': t.book_author,
+            'From Branch': t.from_branch?.name || '—',
+            'To Branch': t.to_branch?.name || '—',
+            'Transfer Date': fmtDate(t.transfer_date)
+          })), 'transferred_books_report');
+        }}>
+          <Download className="h-4 w-4 mr-1" /> Download
+        </Button>
+      </PageHeader>
+      {isLoading ? (
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>
+      ) : (
+        <DataTable
+          columns={[
+            { header: "Accession No.", accessor: "accession_number" },
+            { header: "Title", accessor: (row: any) => row.book_title || "—" },
+            { header: "From Branch", accessor: (row: any) => row.from_branch?.name || "—" },
+            { header: "To Branch", accessor: (row: any) => row.to_branch?.name || "—" },
+            { header: "Transfer Date", accessor: (row: any) => fmtDate(row.transfer_date) },
+          ]}
+          data={transferred}
         />
       )}
     </div>
