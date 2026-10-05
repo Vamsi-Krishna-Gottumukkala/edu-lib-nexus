@@ -32,13 +32,15 @@ const TransferBook = () => {
     mutationFn: () =>
       updateBook(lookupAccession!, {
         branch_id: parseInt(toBranchId),
-        status: "Transferred",
+        status: "Available",
       }, branchId),
     onSuccess: () => {
       const branch = (branches as any[]).find(b => String(b.id) === toBranchId);
       toast.success(`Book transferred to ${branch?.name || "new branch"} successfully!`);
       setAccessionNo(""); setLookupAccession(null); setToBranchId("");
       queryClient.invalidateQueries({ queryKey: ["books"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["book-transfer-lookup"] });
     },
     onError: (err: any) => toast.error(err.message || "Transfer failed"),
   });
