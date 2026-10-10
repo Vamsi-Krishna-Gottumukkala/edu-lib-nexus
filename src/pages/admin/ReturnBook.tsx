@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Loader2, CheckCircle, AlertTriangle, BookOpen, Pencil } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { DataTable } from "@/components/DataTable";
-import { fmtDate } from "@/lib/utils";
+import { fmtDate, getLocalISODate } from "@/lib/utils";
 
 const ReturnBook = () => {
   const { adminBranch, isSuperAdmin } = useAuth();
@@ -21,7 +21,7 @@ const ReturnBook = () => {
   const [editingFine, setEditingFine] = useState(false);
   const [customFine, setCustomFine] = useState<string>("");
 
-  const returnDate = new Date().toISOString().split("T")[0];
+  const returnDate = getLocalISODate();
 
   // Fetch settings for dynamic fine_per_day
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: getSettings });
@@ -44,9 +44,10 @@ const ReturnBook = () => {
   // Calculate fine dynamically from settings — fine starts from the day AFTER due date
   const calculatedFine = issueRecord ? (() => {
     const today = new Date();
-    const due = new Date(issueRecord.due_date);
-    // Math.floor ensures the due date itself is NOT counted
-    const diff = Math.floor((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
+    today.setHours(0, 0, 0, 0);
+    const [y, m, d] = issueRecord.due_date.split('-').map(Number);
+    const due = new Date(y, m - 1, d);
+    const diff = Math.round((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
     return diff > 0 ? diff * finePerDay : 0;
   })() : 0;
 
@@ -107,7 +108,7 @@ const ReturnBook = () => {
           onClick={() => {
             setAccessionNo(row.accession_number);
             setLookupAccession(row.accession_number);
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            document.getElementById('main-scroll-container')?.scrollTo({ top: 0, behavior: "smooth" });
           }}
         >
           Return
@@ -129,7 +130,7 @@ const ReturnBook = () => {
               <div className="flex-1">
                 <Label>Accession Number</Label>
                 <Input
-                  placeholder="e.g. GVP/LIB/2024/001"
+                  placeholder="e.g. 10042"
                   value={accessionNo}
                   onChange={e => setAccessionNo(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && setLookupAccession(accessionNo)}
