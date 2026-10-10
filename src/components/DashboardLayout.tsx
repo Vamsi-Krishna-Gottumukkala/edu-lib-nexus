@@ -186,7 +186,7 @@ export const DashboardLayout = () => {
         )}
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-6 bg-background">
+        <main id="main-scroll-container" className="flex-1 overflow-y-auto p-3 sm:p-6 bg-background">
           <Outlet />
         </main>
       </div>
