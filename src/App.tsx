@@ -25,11 +25,12 @@ import ManageEbooks from "@/pages/admin/ManageEbooks";
 import IssueBook from "@/pages/admin/IssueBook";
 import ReturnBook from "@/pages/admin/ReturnBook";
 import TransferBook from "@/pages/admin/TransferBook";
+import BookLookup from "@/pages/admin/BookLookup";
 import LostBooks from "@/pages/admin/LostBooks";
 import WithdrawBooks from "@/pages/admin/WithdrawBooks";
 import BranchOverview from "@/pages/admin/BranchOverview";
 import ReportIssued from "@/pages/admin/ReportIssued";
-import ReturnedBooks from "@/pages/admin/ReturnedBooks";
+import ReportReturned from "@/pages/admin/ReportReturned";
 import Guide from "@/pages/admin/Guide";
 import Announcements from "@/pages/admin/Announcements";
 import AttendanceReport from "@/pages/admin/AttendanceReport";
@@ -99,9 +100,10 @@ const App = () => (
                 <Route path="/admin/issue-book" element={<IssueBook />} />
                 <Route path="/admin/return-book" element={<ReturnBook />} />
                 <Route path="/admin/transfer-book" element={<TransferBook />} />
+                <Route path="/admin/book-status" element={<BookLookup />} />
                 <Route path="/admin/lost-books" element={<LostBooks />} />
                 <Route path="/admin/withdraw-books" element={<WithdrawBooks />} />
-                <Route path="/admin/returned-books" element={<ReturnedBooks />} />
+                <Route path="/admin/report-returned" element={<ReportReturned />} />
                 <Route path="/admin/guide" element={<Guide />} />
                 <Route path="/admin/announcements" element={<Announcements />} />
                 <Route path="/admin/branches" element={<BranchOverview />} />
