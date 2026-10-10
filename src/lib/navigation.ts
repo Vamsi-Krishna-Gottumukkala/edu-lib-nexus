@@ -57,7 +57,7 @@ export const adminNav: NavItem[] = [
         { title: "Transfer Book", url: "/admin/transfer-book", icon: ArrowLeftRight },
       ]},
       { title: "Book Status", icon: AlertTriangle, children: [
-        { title: "Returned Books", url: "/admin/returned-books", icon: BookCopy },
+        { title: "Check Status",   url: "/admin/book-status",    icon: Search },
         { title: "Lost Books",     url: "/admin/lost-books",     icon: AlertTriangle },
         { title: "Withdraw Books", url: "/admin/withdraw-books", icon: XCircle },
       ]},
@@ -77,6 +77,7 @@ export const adminNav: NavItem[] = [
     title: "Reports", icon: BarChart3, children: [
       { title: "Library Reports", icon: BarChart3, children: [
         { title: "Issued Books",   url: "/admin/report-issued",    icon: BookOpen },
+        { title: "Returned Books", url: "/admin/report-returned",  icon: BookCopy },
         { title: "Lost Books",     url: "/admin/report-lost",      icon: AlertTriangle },
         { title: "Withdraw Books", url: "/admin/report-withdrawn", icon: XCircle },
         { title: "Transferred Books", url: "/admin/report-transferred", icon: ArrowLeftRight },
