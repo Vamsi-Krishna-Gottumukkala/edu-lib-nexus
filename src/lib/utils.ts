@@ -25,6 +25,13 @@ export function fmtDate(d: string | null | undefined): string {
   }
 }
 
+/** Returns the local yyyy-mm-dd string (ignoring UTC offset shifts) */
+export function getLocalISODate(date: Date = new Date()): string {
+  const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+  const localDate = new Date(date.getTime() - offsetMs);
+  return localDate.toISOString().split('T')[0];
+}
+
 
 /** Converts any name (ALL CAPS, lowercase, mixed) to Title Case.
  *  e.g. "ABOTHULA TARUN KUMAR" → "Abothula Tarun Kumar"
