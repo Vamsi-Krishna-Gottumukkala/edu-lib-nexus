@@ -13,6 +13,7 @@ import { getSettings } from "@/lib/services/settings";
 import { toast } from "sonner";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { getLocalISODate } from "@/lib/utils";
 
 const IssueBook = () => {
   const { adminBranch, isSuperAdmin } = useAuth();
@@ -23,7 +24,7 @@ const IssueBook = () => {
   const [dueDate, setDueDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 14);
-    return d.toISOString().split("T")[0];
+    return getLocalISODate(d);
   });
   const [lookupStudentId, setLookupStudentId] = useState<string | null>(null);
   const [lookupAccession, setLookupAccession] = useState<string | null>(null);
@@ -72,7 +73,7 @@ const IssueBook = () => {
     issueMutation.mutate();
   };
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalISODate();
 
   return (
     <div className="animate-fade-in">
@@ -128,7 +129,7 @@ const IssueBook = () => {
             <div className="flex-1">
               <Label>Accession Number</Label>
               <Input
-                placeholder="e.g. GVP/LIB/2024/001"
+                placeholder="e.g. 10042"
                 value={accessionNo}
                 onChange={e => setAccessionNo(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && setLookupAccession(accessionNo)}
