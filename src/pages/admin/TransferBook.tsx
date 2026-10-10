@@ -69,7 +69,7 @@ const TransferBook = () => {
             <div className="flex-1">
               <Label>Accession Number</Label>
               <Input
-                placeholder="e.g. GVP/LIB/2024/001"
+                placeholder="e.g. 10042"
                 value={accessionNo}
                 onChange={e => setAccessionNo(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && setLookupAccession(accessionNo)}

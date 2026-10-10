@@ -52,7 +52,7 @@ const WithdrawBooks = () => {
           <div className="flex gap-3">
             <div className="flex-1">
               <Label>Accession Number</Label>
-              <Input placeholder="e.g. GVP/LIB/2024/001" value={accessionNo}
+              <Input placeholder="e.g. 10042" value={accessionNo}
                 onChange={e => setAccessionNo(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && setLookupAccession(accessionNo)} />
             </div>
