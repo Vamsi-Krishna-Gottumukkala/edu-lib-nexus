@@ -209,7 +209,7 @@ const AddBook = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="col-span-2 sm:col-span-1">
                   <Label>Accession Number *</Label>
-                  <Input placeholder="e.g. GVP/LIB/2024/001" value={form.accession_number}
+                  <Input placeholder="e.g. 10042" value={form.accession_number}
                     onChange={e => upd("accession_number", e.target.value)} />
                 </div>
                 <div className="col-span-2 sm:col-span-1">
