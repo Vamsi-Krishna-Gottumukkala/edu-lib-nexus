@@ -280,3 +280,15 @@ export async function getTransferLogs(branchId?: number | null) {
   if (error) throw error
   return data
 }
+
+export async function getBookHistory(accessionNumber: string) {
+  const { data: issues, error: issuesErr } = await supabase
+    .from('book_issues')
+    .select('issue_date, return_date, due_date, is_returned, fine_amount, users(user_name, user_type)')
+    .eq('accession_number', accessionNumber)
+    .order('issue_date', { ascending: false })
+
+  if (issuesErr) throw issuesErr
+
+  return { issues: issues || [] }
+}

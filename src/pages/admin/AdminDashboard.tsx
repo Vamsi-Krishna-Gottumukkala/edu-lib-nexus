@@ -8,6 +8,7 @@ import { getInventoryStats } from "@/lib/services/books";
 import { getTodayCount, getAttendanceLogs, getAttendanceStats } from "@/lib/services/attendance";
 import { getIssuedBooks, getReturnedBooks } from "@/lib/services/issues";
 import { getPapers } from "@/lib/services/papers";
+import { fmtDate } from "@/lib/utils";
 import {
   Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid,
   PieChart, Pie, Cell,
@@ -56,21 +57,24 @@ const AdminDashboard = () => {
     ...issuedBooks.slice(0, 3).map((issue: any) => ({
       action: "Book Issued",
       detail: `${issue.book_copies?.title || issue.accession_number} → ${issue.users?.user_name || issue.user_id}`,
-      time: new Date(issue.created_at).toLocaleDateString(),
+      time: fmtDate(issue.issue_date || issue.created_at),
       type: "issue",
     })),
     ...returnedBooks.slice(0, 2).map((r: any) => ({
       action: "Book Returned",
       detail: `${r.book_copies?.title || r.accession_number} → ${r.users?.user_name || r.user_id}`,
-      time: new Date(r.return_date).toLocaleDateString(),
+      time: fmtDate(r.return_date),
       type: "return",
     })),
-    ...recentLogs.slice(0, 3).map((log: any) => ({
-      action: log.logout_time ? "Student Exit" : "Student Entry",
-      detail: `${log.users?.user_name || log.user_id}`,
-      time: `${log.log_date} ${log.login_time}`,
-      type: "entry",
-    })),
+    ...recentLogs.slice(0, 3).map((log: any) => {
+      const timeStr = log.login_time ? log.login_time.slice(0, 5).replace(':', '-') : "";
+      return {
+        action: log.logout_time ? "Student Exit" : "Student Entry",
+        detail: `${log.users?.user_name || log.user_id}`,
+        time: `${timeStr} ${fmtDate(log.log_date)}`,
+        type: "entry",
+      };
+    }),
   ].slice(0, 8);
 
   // Group attendance for chart (last 7 entries)

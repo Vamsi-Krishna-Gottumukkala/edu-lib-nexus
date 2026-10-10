@@ -16,7 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 type UserType = "student" | "faculty" | "all";
 
-export default function ReportIssued() {
+export default function ReportReturned() {
   const [userType, setUserType] = useState<UserType>("all");
   const [startDate, setStartDate] = useState(() => {
     const d = new Date(); d.setDate(d.getDate() - 30);
@@ -39,9 +39,9 @@ export default function ReportIssued() {
   const { data: departments = [] } = useQuery({ queryKey: ["departments", branchId], queryFn: () => getDepartments(branchId) });
 
   const { data: reportData = [], isLoading } = useQuery({
-    queryKey: ["circulation-report", "issued", fetchParams],
+    queryKey: ["circulation-report", "returned", fetchParams],
     queryFn: () => fetchParams ? getCirculationReport({
-      type: 'issued',
+      type: 'returned',
       userType: fetchParams.userType,
       startDate: fetchParams.startDate,
       endDate: fetchParams.endDate,
@@ -68,19 +68,19 @@ export default function ReportIssued() {
     const rows = (reportData as any[]).map(r => ({
       "Accession No": r.accession_number,
       "Title": r.book_copies?.title || "—",
-      "Issued To": r.users?.user_name || r.user_id,
+      "Returned By": r.users?.user_name || r.user_id,
       "Role": r.users?.user_type,
       "Branch / Dept": r.users?.user_type === "student"
         ? (r.users?.programs?.branch_name ?? "—")
         : (r.users?.departments?.department_name ?? "—"),
       "Issue Date": fmtDate(r.issue_date),
-      "Due Date": fmtDate(r.due_date),
-      "Overdue": new Date(r.due_date) < new Date() ? 'Yes' : 'No'
+      "Return Date": fmtDate(r.return_date),
+      "Fine Amount": r.fine_amount || 0
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Issued Books");
-    XLSX.writeFile(wb, `Issued_Books_${userType}_${startDate}_to_${endDate}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, "Returned Books");
+    XLSX.writeFile(wb, `Returned_Books_${userType}_${startDate}_to_${endDate}.xlsx`);
     toast.success("Excel downloaded!");
   }
 
@@ -92,7 +92,7 @@ export default function ReportIssued() {
 
   return (
     <div className="animate-fade-in space-y-6">
-      <PageHeader title="Issued Books Report" description="Generate and download filtered issued books records" />
+      <PageHeader title="Returned Books Report" description="Generate and download filtered returned books records" />
 
       {/* Filters */}
       <Card>
@@ -205,14 +205,12 @@ export default function ReportIssued() {
                 columns={[
                   { header: "Accession No.", accessor: "accession_number" },
                   { header: "Title", accessor: (r: any) => r.book_copies?.title ?? "—" },
-                  { header: "Issued To", accessor: (r: any) => r.users?.user_name ?? r.user_id },
+                  { header: "Returned By", accessor: (r: any) => r.users?.user_name ?? r.user_id },
                   { header: "Role", accessor: (r: any) => <span className="capitalize">{r.users?.user_type}</span> },
                   { header: "Issue Date", accessor: (r: any) => fmtDate(r.issue_date) },
-                  { header: "Due Date", accessor: (r: any) => {
-                      const isOverdue = new Date(r.due_date) < new Date();
-                      return <span className={isOverdue ? "text-red-500 font-semibold" : ""}>{fmtDate(r.due_date)}</span>;
-                  }},
-                  { header: "Status", accessor: () => <StatusBadge status="Issued" /> },
+                  { header: "Return Date", accessor: (r: any) => fmtDate(r.return_date) },
+                  { header: "Fine", accessor: (r: any) => r.fine_amount > 0 ? <span className="text-red-500 font-medium">₹{r.fine_amount}</span> : "₹0" },
+                  { header: "Status", accessor: () => <StatusBadge status="Available" /> },
                 ]}
                 data={reportData}
               />

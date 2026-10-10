@@ -13,7 +13,9 @@ async function getFinePerDay(): Promise<number> {
 export async function issueBook(userId: string, accessionNumber: string, branchId: number | null, dueDays = 14) {
   const dueDate = new Date()
   dueDate.setDate(dueDate.getDate() + dueDays)
-  const dueDateStr = dueDate.toISOString().split('T')[0]
+  const offsetMs = dueDate.getTimezoneOffset() * 60 * 1000
+  const localDueDate = new Date(dueDate.getTime() - offsetMs)
+  const dueDateStr = localDueDate.toISOString().split('T')[0]
 
   // Copy book details into the issue row. Historical issue records can then
   // remain readable even after a returned book copy is deleted from inventory.
@@ -65,17 +67,21 @@ export async function returnBook(accessionNumber: string, branchId?: number | nu
   const finePerDay = await getFinePerDay()
 
   const today = new Date()
-  const dueDate = new Date(issue.due_date)
-  // Fine starts from the day AFTER the due date. Math.floor ensures the due date itself is not counted.
-  const overdueDays = Math.max(0, Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)))
+  today.setHours(0, 0, 0, 0)
+  const [y, m, d] = issue.due_date.split('-').map(Number)
+  const dueDate = new Date(y, m - 1, d)
+  const overdueDays = Math.max(0, Math.round((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)))
   const calculatedFine = overdueDays * finePerDay
 
   // Use admin-overridden fine if provided, otherwise use calculated
   const fine = customFine !== undefined ? customFine : calculatedFine
 
+  const offsetMs = today.getTimezoneOffset() * 60 * 1000
+  const localToday = new Date(today.getTime() - offsetMs)
+
   const { data: updated, error: updateErr } = await supabase
     .from('book_issues')
-    .update({ return_date: today.toISOString().split('T')[0], fine_amount: fine, is_returned: true })
+    .update({ return_date: localToday.toISOString().split('T')[0], fine_amount: fine, is_returned: true })
     .eq('id', issue.id)
     .select()
     .single()
@@ -197,10 +203,11 @@ export async function getIssueByAccession(accessionNumber: string, branchId?: nu
 export async function calculateFine(dueDate: string) {
   const finePerDay = await getFinePerDay()
   const today = new Date()
-  const due = new Date(dueDate)
+  today.setHours(0, 0, 0, 0)
+  const [y, m, d] = dueDate.split('-').map(Number)
+  const due = new Date(y, m - 1, d)
   const diffMs = today.getTime() - due.getTime()
-  // Fine starts from the day AFTER the due date
-  const overdueDays = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)))
+  const overdueDays = Math.max(0, Math.round(diffMs / (1000 * 60 * 60 * 24)))
   return { overdueDays, fine: overdueDays * finePerDay }
 }
 
@@ -216,3 +223,70 @@ export async function getCirculationStats() {
   const totalFines = returned?.reduce((sum, r) => sum + (r.fine_amount || 0), 0) ?? 0
   return { activeIssues: activeIssues ?? 0, totalFines }
 }
+
+export async function getCirculationReport(params: {
+  type: 'issued' | 'returned'
+  userType: 'student' | 'faculty' | 'all'
+  startDate: string
+  endDate: string
+  branches?: string[]
+  departments?: string[]
+  branchId?: number | null
+}) {
+  const { type, userType, startDate, endDate, branches, departments, branchId } = params
+
+  // Step 1: Fetch raw issue records with date filter
+  let query = supabase
+    .from('book_issues')
+    .select('*')
+    .eq('is_returned', type === 'returned')
+
+  if (type === 'issued') {
+    query = query.gte('issue_date', startDate).lte('issue_date', endDate).order('issue_date', { ascending: false })
+  } else {
+    query = query.gte('return_date', startDate).lte('return_date', endDate).order('return_date', { ascending: false })
+  }
+
+  if (branchId != null) query = query.eq('branch_id', branchId)
+
+  const { data: issues, error } = await query
+  if (error) throw error
+  if (!issues || issues.length === 0) return []
+
+  // Step 2: Enrich with book + user details (same pattern as getIssuedBooks)
+  const accessions = [...new Set(issues.map((i: any) => i.accession_number))]
+  const userIds    = [...new Set(issues.map((i: any) => i.user_id))]
+
+  const [{ data: books }, { data: users }] = await Promise.all([
+    supabase
+      .from('book_copies')
+      .select('accession_number, title, author, branch_id')
+      .in('accession_number', accessions),
+    supabase
+      .from('users')
+      .select('user_id, user_name, user_type, branch_id, programs(branch_name, branch_code, degree), departments(department_name)')
+      .in('user_id', userIds),
+  ])
+
+  const bookMap = Object.fromEntries((books || []).map((b: any) => [b.accession_number, b]))
+  const userMap = Object.fromEntries((users || []).map((u: any) => [u.user_id, u]))
+
+  let rows = issues.map((i: any) => ({
+    ...i,
+    book_copies: bookMap[i.accession_number] || { title: i.book_title || i.accession_number, author: i.book_author || null },
+    users: userMap[i.user_id] || null,
+  }))
+
+  // Client-side filters
+  if (userType !== 'all') {
+    rows = rows.filter((r: any) => r.users?.user_type === userType)
+  }
+  if (branches && branches.length > 0) {
+    rows = rows.filter((r: any) => r.users?.user_type !== 'student' || branches.includes(r.users?.programs?.branch_code))
+  }
+  if (departments && departments.length > 0) {
+    rows = rows.filter((r: any) => r.users?.user_type !== 'faculty' || departments.includes(r.users?.departments?.department_name))
+  }
+  return rows
+}
+
