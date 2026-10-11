@@ -20,7 +20,7 @@ const emptyForm = {
   accession_number: "", title: "", author: "", isbn: "",
   branch_id: "", publisher: "", year_of_publication: "", edition: "",
   call_no: "", cost: "", source: "", book_no: "", acquisition_date: "",
-  place_of_publication: "",
+  place_of_publication: "", category: "",
 };
 
 const AddBook = () => {
@@ -49,6 +49,7 @@ const AddBook = () => {
         title: form.title,
         author: form.author || null,
         isbn: form.isbn || null,
+        category: form.category || null,
         branch_id: effectiveBranchId ? parseInt(effectiveBranchId) : null,
         publisher: form.publisher || null,
         year_of_publication: form.year_of_publication ? parseInt(form.year_of_publication) : null,
@@ -146,6 +147,7 @@ const AddBook = () => {
           place_of_publication: String(getVal(["PLACE OF PUBLICATION", "PlaceOfPublication", "place_of_publication", "Place"]) ?? "").trim() || null,
           year_of_publication: parsedYear,
           edition:           String(getVal(["Edition", "edition"]) ?? "").trim() || null,
+          category:          String(getVal(["Category", "category"]) ?? "").trim() || null,
           source:            String(getVal(["Source", "source"]) ?? "").trim() || null,
           cost:              parseFloat(String(getVal(["Cost", "cost"]))) || null,
           isbn:              String(getVal(["ISBN", "isbn"]) ?? "").trim() || null,
@@ -246,6 +248,11 @@ const AddBook = () => {
                   <Label>Edition</Label>
                   <Input placeholder="e.g. 3rd Edition" value={form.edition}
                     onChange={e => upd("edition", e.target.value)} />
+                </div>
+                <div>
+                  <Label>Category</Label>
+                  <Input placeholder="e.g. Text Book" value={form.category}
+                    onChange={e => upd("category", e.target.value)} />
                 </div>
                 <div>
                   <Label>Cost (₹)</Label>

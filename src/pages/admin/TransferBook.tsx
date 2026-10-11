@@ -32,6 +32,8 @@ const TransferBook = () => {
     mutationFn: async () => {
       await logTransfer({
         accession_number: lookupAccession!,
+        book_title: foundBook!.title,
+        book_author: foundBook!.author || null,
         from_branch_id: foundBook!.branch_id,
         to_branch_id: parseInt(toBranchId),
         transferred_by: userId || null,
