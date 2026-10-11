@@ -75,7 +75,6 @@ export default function ReportReturned() {
         : (r.users?.departments?.department_name ?? "—"),
       "Issue Date": fmtDate(r.issue_date),
       "Return Date": fmtDate(r.return_date),
-      "Fine Amount": r.fine_amount || 0
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
@@ -209,7 +208,6 @@ export default function ReportReturned() {
                   { header: "Role", accessor: (r: any) => <span className="capitalize">{r.users?.user_type}</span> },
                   { header: "Issue Date", accessor: (r: any) => fmtDate(r.issue_date) },
                   { header: "Return Date", accessor: (r: any) => fmtDate(r.return_date) },
-                  { header: "Fine", accessor: (r: any) => r.fine_amount > 0 ? <span className="text-red-500 font-medium">₹{r.fine_amount}</span> : "₹0" },
                   { header: "Status", accessor: () => <StatusBadge status="Available" /> },
                 ]}
                 data={reportData}
