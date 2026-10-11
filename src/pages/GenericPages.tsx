@@ -28,6 +28,7 @@ import { getPapers, deletePaper, incrementDownload } from "@/lib/services/papers
 import { getBranches, addBranch, getBranchStats } from "@/lib/services/branches";
 import { getUsers, getTotalUserCount } from "@/lib/services/users";
 import { getSettings, updateSettings } from "@/lib/services/settings";
+import { supabase } from "@/lib/supabase";
 
 /* ── Admin: Student Visit History ── */
 export const VisitHistory = () => {
@@ -581,19 +582,72 @@ export const UserManagement = () => {
 /* ── Admin: System Settings ── */
 export const SystemSettings = () => {
   const queryClient = useQueryClient();
+  const { adminBranch, isSuperAdmin } = useAuth();
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: getSettings });
+  const { data: branches = [] } = useQuery({ queryKey: ["branches"], queryFn: getBranches });
   const [form, setForm] = useState<Record<string, string>>({});
 
-  // Initialize form from settings
+  const dwkBranch = (branches as any[]).find(b => b.id === 2 || b.name?.toLowerCase().includes("dwaraka"));
+  const mvpBranch = (branches as any[]).find(b => b.id === 1 || b.name?.toLowerCase().includes("mvp"));
+
+  const isDwk = adminBranch?.branch_id === 2 || adminBranch?.branch_name?.toLowerCase().includes("dwaraka") || adminBranch?.admin_email === "gvpdwk@gvpcdpgc.edu.in";
+  const isMvp = !isDwk && (adminBranch?.branch_id === 1 || adminBranch?.branch_name?.toLowerCase().includes("mvp") || adminBranch?.admin_email === "gvpmvp@gvpcdpgc.edu.in" || !isSuperAdmin);
+
+  // Initialize form from settings & branch-specific data
   React.useEffect(() => {
-    if (settings) setForm(settings);
-  }, [settings]);
+    if (settings) {
+      const initial: Record<string, string> = { ...settings };
+      const defaultMvpEmail = mvpBranch?.admin_email || settings.admin_email_mvp || "gvpmvp@gvpcdpgc.edu.in";
+      const defaultDwkEmail = dwkBranch?.admin_email || settings.admin_email_dwk || "gvpdwk@gvpcdpgc.edu.in";
+
+      initial.admin_email_mvp = initial.admin_email_mvp || defaultMvpEmail;
+      initial.admin_email_dwk = initial.admin_email_dwk || defaultDwkEmail;
+
+      if (isDwk) {
+        initial.admin_email = initial.admin_email_dwk || defaultDwkEmail;
+      } else {
+        initial.admin_email = initial.admin_email_mvp || defaultMvpEmail;
+      }
+      setForm(initial);
+    }
+  }, [settings, branches, adminBranch, isDwk]);
 
   const updateMutation = useMutation({
-    mutationFn: (data: Record<string, string>) => updateSettings(data),
+    mutationFn: async (data: Record<string, string>) => {
+      const toSave = { ...data };
+      if (isDwk) {
+        toSave.admin_email_dwk = data.admin_email || "gvpdwk@gvpcdpgc.edu.in";
+      } else if (isMvp) {
+        toSave.admin_email_mvp = data.admin_email || "gvpmvp@gvpcdpgc.edu.in";
+      }
+      await updateSettings(toSave);
+
+      // Sync with library_branches table
+      if (isDwk) {
+        const email = data.admin_email || data.admin_email_dwk || "gvpdwk@gvpcdpgc.edu.in";
+        await supabase
+          .from("library_branches")
+          .update({ admin_email: email })
+          .eq("id", dwkBranch?.id ?? 2);
+      } else if (isMvp) {
+        const email = data.admin_email || data.admin_email_mvp || "gvpmvp@gvpcdpgc.edu.in";
+        await supabase
+          .from("library_branches")
+          .update({ admin_email: email })
+          .eq("id", mvpBranch?.id ?? 1);
+      } else if (isSuperAdmin) {
+        if (data.admin_email_mvp) {
+          await supabase.from("library_branches").update({ admin_email: data.admin_email_mvp }).eq("id", mvpBranch?.id ?? 1);
+        }
+        if (data.admin_email_dwk) {
+          await supabase.from("library_branches").update({ admin_email: data.admin_email_dwk }).eq("id", dwkBranch?.id ?? 2);
+        }
+      }
+    },
     onSuccess: () => {
       toast.success("Settings saved successfully!");
       queryClient.invalidateQueries({ queryKey: ["settings"] });
+      queryClient.invalidateQueries({ queryKey: ["branches"] });
     },
     onError: () => toast.error("Failed to save settings"),
   });
@@ -630,16 +684,63 @@ export const SystemSettings = () => {
           </div>
         </div>
         <div className="bg-card rounded-xl p-5 border border-border/50 card-shadow space-y-4">
-          <h3 className="text-sm font-semibold text-card-foreground">Institution Details</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-card-foreground">Institution Details</h3>
+            {isSuperAdmin ? (
+              <Badge variant="secondary" className="text-xs">Super Admin (Central Library)</Badge>
+            ) : (
+              <Badge variant="outline" className="text-xs">
+                {adminBranch?.branch_name || (isDwk ? "Dwaraka Nagar Campus" : "MVP Campus")}
+              </Badge>
+            )}
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="col-span-2">
               <Label>Institution Name</Label>
               <Input value={form.institution_name || ""} onChange={e => upd("institution_name", e.target.value)} />
             </div>
-            <div className="col-span-2">
-              <Label>Admin Email</Label>
-              <Input value={form.admin_email || ""} onChange={e => upd("admin_email", e.target.value)} />
-            </div>
+            {isSuperAdmin ? (
+              <>
+                <div>
+                  <Label>MVP Campus Admin Email</Label>
+                  <Input
+                    type="email"
+                    value={form.admin_email_mvp ?? "gvpmvp@gvpcdpgc.edu.in"}
+                    onChange={e => upd("admin_email_mvp", e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Official library admin for MVP Campus</p>
+                </div>
+                <div>
+                  <Label>Dwaraka Nagar Campus Admin Email</Label>
+                  <Input
+                    type="email"
+                    value={form.admin_email_dwk ?? "gvpdwk@gvpcdpgc.edu.in"}
+                    onChange={e => upd("admin_email_dwk", e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Official library admin for Dwaraka Nagar Campus</p>
+                </div>
+              </>
+            ) : (
+              <div className="col-span-2">
+                <Label>Admin Email ({isDwk ? "Dwaraka Nagar Campus" : "MVP Campus"})</Label>
+                <Input
+                  type="email"
+                  value={
+                    form.admin_email !== undefined
+                      ? form.admin_email
+                      : (isDwk ? (form.admin_email_dwk || "gvpdwk@gvpcdpgc.edu.in") : (form.admin_email_mvp || "gvpmvp@gvpcdpgc.edu.in"))
+                  }
+                  onChange={e => {
+                    upd("admin_email", e.target.value);
+                    if (isDwk) upd("admin_email_dwk", e.target.value);
+                    else upd("admin_email_mvp", e.target.value);
+                  }}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Official admin email for {isDwk ? "Dwaraka Nagar Campus (gvpdwk@gvpcdpgc.edu.in)" : "MVP Campus (gvpmvp@gvpcdpgc.edu.in)"}
+                </p>
+              </div>
+            )}
           </div>
         </div>
         <Button onClick={() => updateMutation.mutate(form)} className="w-full" disabled={updateMutation.isPending}>
