@@ -131,6 +131,37 @@ export async function getIssuedBooks(userId?: string, branchId?: number | null) 
   }))
 }
 
+export async function getUserCirculationHistory(userId: string, branchId?: number | null) {
+  let query = supabase
+    .from('book_issues')
+    .select('*')
+    .eq('user_id', userId)
+    .order('issue_date', { ascending: false })
+
+  if (branchId != null) query = query.eq('branch_id', branchId)
+
+  const { data: issues, error } = await query
+  if (error) throw error
+  if (!issues || issues.length === 0) return []
+
+  const accessions = [...new Set(issues.map(i => i.accession_number))]
+
+  const { data: books } = await supabase
+    .from('book_copies')
+    .select('accession_number, title, author, branch_id')
+    .in('accession_number', accessions)
+
+  const bookMap = Object.fromEntries((books || []).map(b => [b.accession_number, b]))
+
+  return issues.map(i => ({
+    ...i,
+    book_copies: bookMap[i.accession_number] || {
+      title: i.book_title || i.accession_number,
+      author: i.book_author || null,
+    },
+  }))
+}
+
 export async function getReturnedBooks(limit = 100, branchId?: number | null) {
   let query = supabase
     .from('book_issues')
