@@ -284,7 +284,7 @@ export async function getTransferLogs(branchId?: number | null) {
 export async function getBookHistory(accessionNumber: string) {
   const { data: issues, error: issuesErr } = await supabase
     .from('book_issues')
-    .select('issue_date, return_date, due_date, is_returned, fine_amount, users(user_name, user_type)')
+    .select('user_id, issue_date, return_date, due_date, is_returned, fine_amount, users(user_id, user_name, user_type)')
     .eq('accession_number', accessionNumber)
     .order('issue_date', { ascending: false })
 

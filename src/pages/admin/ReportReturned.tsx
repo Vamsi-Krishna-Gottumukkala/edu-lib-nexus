@@ -68,7 +68,8 @@ export default function ReportReturned() {
     const rows = (reportData as any[]).map(r => ({
       "Accession No": r.accession_number,
       "Title": r.book_copies?.title || "—",
-      "Returned By": r.users?.user_name || r.user_id,
+      "Returned By": r.users?.user_name || "—",
+      "Roll No / ID": r.user_id || r.users?.user_id || "—",
       "Role": r.users?.user_type,
       "Branch / Dept": r.users?.user_type === "student"
         ? (r.users?.programs?.branch_name ?? "—")
@@ -204,7 +205,17 @@ export default function ReportReturned() {
                 columns={[
                   { header: "Accession No.", accessor: "accession_number" },
                   { header: "Title", accessor: (r: any) => r.book_copies?.title ?? "—" },
-                  { header: "Returned By", accessor: (r: any) => r.users?.user_name ?? r.user_id },
+                  {
+                    header: "Returned By",
+                    accessor: (r: any) => (
+                      <div>
+                        <span className="font-medium text-foreground block">{r.users?.user_name || "—"}</span>
+                        <span className="text-xs text-muted-foreground font-mono block">
+                          Roll No: {r.user_id || r.users?.user_id || "—"}
+                        </span>
+                      </div>
+                    )
+                  },
                   { header: "Role", accessor: (r: any) => <span className="capitalize">{r.users?.user_type}</span> },
                   { header: "Issue Date", accessor: (r: any) => fmtDate(r.issue_date) },
                   { header: "Return Date", accessor: (r: any) => fmtDate(r.return_date) },
