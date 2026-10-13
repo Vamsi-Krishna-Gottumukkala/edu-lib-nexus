@@ -313,30 +313,51 @@ export const ManageBranches = () => {
 export const ReportLost = () => {
   const { adminBranch, isSuperAdmin } = useAuth();
   const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [appliedFrom, setAppliedFrom] = useState("");
+  const [appliedTo, setAppliedTo] = useState("");
+
   const { data: lost = [], isLoading } = useQuery({
-    queryKey: ["books", "lost", branchId],
-    queryFn: () => getBooks({ status: "Lost", branch_id: branchId }),
+    queryKey: ["books", "lost", branchId, appliedFrom, appliedTo],
+    queryFn: () => getBooks({ status: "Lost", branch_id: branchId, dateFrom: appliedFrom || undefined, dateTo: appliedTo || undefined }),
   });
+
+  const handleFilter = () => { setAppliedFrom(dateFrom); setAppliedTo(dateTo); };
+  const handleClear = () => { setDateFrom(""); setDateTo(""); setAppliedFrom(""); setAppliedTo(""); };
 
   return (
     <div className="animate-fade-in">
       <PageHeader title="Lost Books Report" description={`${lost.length} books reported lost`}>
         <Button variant="outline" onClick={() => {
-          if (!lost || lost.length === 0) {
-            toast.error("Nothing to export");
-            return;
-          }
+          if (!lost || lost.length === 0) { toast.error("Nothing to export"); return; }
           exportToCSV(lost.map((l: any) => ({
             'Accession No': l.accession_number,
             'Title': l.title,
             'Author': l.author,
             'Branch': l.library_branches?.name || '—',
-            'Status': 'Lost'
-          })), 'lost_books_report');
+            'Status': 'Lost',
+            ...(appliedFrom || appliedTo ? { 'Filter Period': `${appliedFrom || 'any'} to ${appliedTo || 'any'}` } : {})
+          })), `lost_books_report${appliedFrom ? `_from_${appliedFrom}` : ''}${appliedTo ? `_to_${appliedTo}` : ''}`);
         }}>
           <Download className="h-4 w-4 mr-1" /> Download
         </Button>
       </PageHeader>
+
+      {/* Date Filters */}
+      <div className="flex flex-wrap items-end gap-3 mb-6 p-4 rounded-xl border bg-card">
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs text-muted-foreground">From Date</Label>
+          <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-40" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs text-muted-foreground">To Date</Label>
+          <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-40" />
+        </div>
+        <Button onClick={handleFilter} disabled={!dateFrom && !dateTo}>Apply Filter</Button>
+        {(appliedFrom || appliedTo) && <Button variant="outline" onClick={handleClear}>Clear</Button>}
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <StatsCard title="Total Lost" value={lost.length} icon={AlertTriangle} color="destructive" />
         <StatsCard title="Est. Value" value={`₹${lost.reduce((a: number, b: any) => a + (b.cost || 0), 0).toLocaleString()}`} icon={BookOpen} color="warning" />
@@ -350,6 +371,7 @@ export const ReportLost = () => {
             { header: "Title", accessor: "title" },
             { header: "Author", accessor: (row: any) => row.author || "—" },
             { header: "Branch", accessor: (row: any) => row.library_branches?.name || "—" },
+            { header: "Marked Lost", accessor: (row: any) => fmtDate(row.created_at) },
             { header: "Status", accessor: () => <StatusBadge status="Lost" /> },
           ]}
           data={lost}
@@ -363,30 +385,51 @@ export const ReportLost = () => {
 export const ReportWithdrawn = () => {
   const { adminBranch, isSuperAdmin } = useAuth();
   const branchId = isSuperAdmin ? null : (adminBranch?.branch_id ?? null);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [appliedFrom, setAppliedFrom] = useState("");
+  const [appliedTo, setAppliedTo] = useState("");
+
   const { data: withdrawn = [], isLoading } = useQuery({
-    queryKey: ["books", "withdrawn", branchId],
-    queryFn: () => getBooks({ status: "Withdrawn", branch_id: branchId }),
+    queryKey: ["books", "withdrawn", branchId, appliedFrom, appliedTo],
+    queryFn: () => getBooks({ status: "Withdrawn", branch_id: branchId, dateFrom: appliedFrom || undefined, dateTo: appliedTo || undefined }),
   });
+
+  const handleFilter = () => { setAppliedFrom(dateFrom); setAppliedTo(dateTo); };
+  const handleClear = () => { setDateFrom(""); setDateTo(""); setAppliedFrom(""); setAppliedTo(""); };
 
   return (
     <div className="animate-fade-in">
       <PageHeader title="Withdrawn Books Report" description={`${withdrawn.length} books withdrawn`}>
         <Button variant="outline" onClick={() => {
-          if (!withdrawn || withdrawn.length === 0) {
-            toast.error("Nothing to export");
-            return;
-          }
+          if (!withdrawn || withdrawn.length === 0) { toast.error("Nothing to export"); return; }
           exportToCSV(withdrawn.map((w: any) => ({
             'Accession No': w.accession_number,
             'Title': w.title,
             'Author': w.author,
             'Branch': w.library_branches?.name || '—',
-            'Status': 'Withdrawn'
-          })), 'withdrawn_books_report');
+            'Status': 'Withdrawn',
+            ...(appliedFrom || appliedTo ? { 'Filter Period': `${appliedFrom || 'any'} to ${appliedTo || 'any'}` } : {})
+          })), `withdrawn_books_report${appliedFrom ? `_from_${appliedFrom}` : ''}${appliedTo ? `_to_${appliedTo}` : ''}`);
         }}>
           <Download className="h-4 w-4 mr-1" /> Download
         </Button>
       </PageHeader>
+
+      {/* Date Filters */}
+      <div className="flex flex-wrap items-end gap-3 mb-6 p-4 rounded-xl border bg-card">
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs text-muted-foreground">From Date</Label>
+          <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-40" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs text-muted-foreground">To Date</Label>
+          <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-40" />
+        </div>
+        <Button onClick={handleFilter} disabled={!dateFrom && !dateTo}>Apply Filter</Button>
+        {(appliedFrom || appliedTo) && <Button variant="outline" onClick={handleClear}>Clear</Button>}
+      </div>
+
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>
       ) : (
@@ -396,6 +439,7 @@ export const ReportWithdrawn = () => {
             { header: "Title", accessor: "title" },
             { header: "Author", accessor: (row: any) => row.author || "—" },
             { header: "Branch", accessor: (row: any) => row.library_branches?.name || "—" },
+            { header: "Marked Withdrawn", accessor: (row: any) => fmtDate(row.created_at) },
             { header: "Status", accessor: () => <StatusBadge status="Withdrawn" /> },
           ]}
           data={withdrawn}
@@ -407,31 +451,52 @@ export const ReportWithdrawn = () => {
 
 /* ── Admin: Report Transferred ── */
 export const ReportTransferred = () => {
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [appliedFrom, setAppliedFrom] = useState("");
+  const [appliedTo, setAppliedTo] = useState("");
+
   const { data: transferred = [], isLoading } = useQuery({
-    queryKey: ["transfer-logs", "all"],
-    queryFn: () => getTransferLogs(null),
+    queryKey: ["transfer-logs", "all", appliedFrom, appliedTo],
+    queryFn: () => getTransferLogs(null, appliedFrom || undefined, appliedTo || undefined),
   });
+
+  const handleFilter = () => { setAppliedFrom(dateFrom); setAppliedTo(dateTo); };
+  const handleClear = () => { setDateFrom(""); setDateTo(""); setAppliedFrom(""); setAppliedTo(""); };
 
   return (
     <div className="animate-fade-in">
-      <PageHeader title="Transferred Books Report" description={`${transferred.length} books transferred into this branch`}>
+      <PageHeader title="Transferred Books Report" description={`${transferred.length} books transferred`}>
         <Button variant="outline" onClick={() => {
-          if (!transferred || transferred.length === 0) {
-            toast.error("Nothing to export");
-            return;
-          }
+          if (!transferred || transferred.length === 0) { toast.error("Nothing to export"); return; }
           exportToCSV(transferred.map((t: any) => ({
             'Accession No': t.accession_number,
             'Title': t.book_title,
             'Author': t.book_author,
             'From Branch': t.from_branch?.name || '—',
             'To Branch': t.to_branch?.name || '—',
-            'Transfer Date': fmtDate(t.transfer_date)
-          })), 'transferred_books_report');
+            'Transfer Date': fmtDate(t.transfer_date),
+            ...(appliedFrom || appliedTo ? { 'Filter Period': `${appliedFrom || 'any'} to ${appliedTo || 'any'}` } : {})
+          })), `transferred_books_report${appliedFrom ? `_from_${appliedFrom}` : ''}${appliedTo ? `_to_${appliedTo}` : ''}`);
         }}>
           <Download className="h-4 w-4 mr-1" /> Download
         </Button>
       </PageHeader>
+
+      {/* Date Filters */}
+      <div className="flex flex-wrap items-end gap-3 mb-6 p-4 rounded-xl border bg-card">
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs text-muted-foreground">From Date</Label>
+          <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-40" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs text-muted-foreground">To Date</Label>
+          <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-40" />
+        </div>
+        <Button onClick={handleFilter} disabled={!dateFrom && !dateTo}>Apply Filter</Button>
+        {(appliedFrom || appliedTo) && <Button variant="outline" onClick={handleClear}>Clear</Button>}
+      </div>
+
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>
       ) : (

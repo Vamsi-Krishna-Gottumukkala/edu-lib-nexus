@@ -23,6 +23,8 @@ export async function getBooks(filters?: {
   branch_id?: number | null
   search?: string
   searchField?: BookSearchField
+  dateFrom?: string
+  dateTo?: string
 }) {
   let query = supabase
     .from('book_copies')
@@ -32,6 +34,8 @@ export async function getBooks(filters?: {
   if (filters?.status) query = query.eq('status', filters.status)
   if (filters?.category) query = query.eq('category', filters.category)
   if (filters?.branch_id != null) query = query.eq('branch_id', filters.branch_id)
+  if (filters?.dateFrom) query = query.gte('created_at', filters.dateFrom)
+  if (filters?.dateTo) query = query.lte('created_at', filters.dateTo + 'T23:59:59.999Z')
   if (filters?.search && filters.searchField) {
     if (filters.searchField === 'accession_number') {
       query = query.eq('accession_number', filters.search)
@@ -262,7 +266,7 @@ export async function logTransfer(log: Omit<TransferLog, 'id' | 'transfer_date' 
   if (error) throw error
 }
 
-export async function getTransferLogs(branchId?: number | null) {
+export async function getTransferLogs(branchId?: number | null, dateFrom?: string, dateTo?: string) {
   let query = supabase
     .from('transfer_logs')
     .select(`
@@ -275,6 +279,8 @@ export async function getTransferLogs(branchId?: number | null) {
   if (branchId != null) {
     query = query.eq('to_branch_id', branchId)
   }
+  if (dateFrom) query = query.gte('transfer_date', dateFrom)
+  if (dateTo) query = query.lte('transfer_date', dateTo + 'T23:59:59.999Z')
 
   const { data, error } = await query
   if (error) throw error
